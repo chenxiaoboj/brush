@@ -160,11 +160,14 @@ public class BrushServiceImpl implements BrushService {
         //总票量 number
         AtomicInteger valueNumber = new AtomicInteger();
         timeAndNumberMap.forEach((key, value) -> {
-            valueNumber.addAndGet(value);
             List<Paramet> list = Lists.newArrayList();
             //3.00-3.30 ,50
             //人数
             int count = 0;
+            if (value < parameterList.get(index.get()).getTouristInfoList().size()+1) {
+                return;
+            }
+            valueNumber.addAndGet(value);
             for (int i = 0; i < value; i++) {
                 try {
                     count += (parameterList.get(index.get() + i).getTouristInfoList().size() + 1);
@@ -196,7 +199,7 @@ public class BrushServiceImpl implements BrushService {
      */
     public List<Paramet> getParamet(List<TouristInfo> list, String goodId, List<String> remarksList) {
         //根据手机号标记进行分组
-        List<List<TouristInfo>> clientInfoList = null;
+        List<List<TouristInfo>> clientInfoList = Lists.newArrayList();
         remarksList.forEach(remark -> {
             List<TouristInfo> listResult = list.stream().filter(
                     touristInfo -> StringUtils.equalsIgnoreCase(touristInfo.getRemarks(), remark))
@@ -228,30 +231,30 @@ public class BrushServiceImpl implements BrushService {
      */
     public void sendRequest(List<Paramet> parametList) {
         List<BrushTicketInfo> brushTicketDtoList = brushTicketInfoDao.findAll();
-        AtomicInteger i = new AtomicInteger();
-        parametList.forEach(paramet -> {
-            List<NameValuePair> list = Lists.newArrayList();
-            list.add(new BasicNameValuePair("goods_id", paramet.getGoodsId()));
-            list.add(new BasicNameValuePair("play_date", paramet.getPlayDate()));
-            list.add(new BasicNameValuePair("amount", paramet.getAmount() + ""));
-            list.add(new BasicNameValuePair("time_slot_damoylxs[]", paramet.getTimeSlotDamoylxs()));
-            list.add(new BasicNameValuePair("name", paramet.getName()));
-            list.add(new BasicNameValuePair("mobile", paramet.getMobile()));
-            list.add(new BasicNameValuePair("id_number", paramet.getIdNumber()));
-            List<TouristInfo> list1 = paramet.getTouristInfoList();
-            list1.forEach(clientInfoFirst -> {
-                NameValuePair nameValuePair = new BasicNameValuePair("id_number_list[]", clientInfoFirst.getIdNumber());
-                NameValuePair nameValuePair1 = new BasicNameValuePair("player_name_list[]", clientInfoFirst.getName());
-                NameValuePair nameValuePair2 = new BasicNameValuePair("player_mobile_list[]", clientInfoFirst.getMobile());
-                list.add(nameValuePair);
-                list.add(nameValuePair1);
-                list.add(nameValuePair2);
-            });
-            //参数
-            NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
-            //@TODO 获取代理信息，每个线程分发一个代理ip
-            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile());
-            i.addAndGet(1);
-        });
+//        AtomicInteger i = new AtomicInteger();
+//        parametList.forEach(paramet -> {
+//            List<NameValuePair> list = Lists.newArrayList();
+//            list.add(new BasicNameValuePair("goods_id", paramet.getGoodsId()));
+//            list.add(new BasicNameValuePair("play_date", paramet.getPlayDate()));
+//            list.add(new BasicNameValuePair("amount", paramet.getAmount() + ""));
+//            list.add(new BasicNameValuePair("time_slot_damoylxs[]", paramet.getTimeSlotDamoylxs()));
+//            list.add(new BasicNameValuePair("name", paramet.getName()));
+//            list.add(new BasicNameValuePair("mobile", paramet.getMobile()));
+//            list.add(new BasicNameValuePair("id_number", paramet.getIdNumber()));
+//            List<TouristInfo> list1 = paramet.getTouristInfoList();
+//            list1.forEach(clientInfoFirst -> {
+//                NameValuePair nameValuePair = new BasicNameValuePair("id_number_list[]", clientInfoFirst.getIdNumber());
+//                NameValuePair nameValuePair1 = new BasicNameValuePair("player_name_list[]", clientInfoFirst.getName());
+//                NameValuePair nameValuePair2 = new BasicNameValuePair("player_mobile_list[]", clientInfoFirst.getMobile());
+//                list.add(nameValuePair);
+//                list.add(nameValuePair1);
+//                list.add(nameValuePair2);
+//            });
+//            //参数
+//            NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
+//            //@TODO 获取代理信息，每个线程分发一个代理ip
+//            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile());
+//            i.addAndGet(1);
+//        });
     }
 }
