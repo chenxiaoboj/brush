@@ -27,7 +27,7 @@ CREATE TABLE `brush_exception_info` (
   `get_ewm_url` varchar(100) DEFAULT NULL COMMENT '获取支付二维码的url',
   `auth_orders_id` varchar(100) DEFAULT NULL COMMENT '订单id',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=793 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of brush_exception_info
@@ -46,7 +46,7 @@ CREATE TABLE `brush_ticket_info` (
   `end_time` date DEFAULT NULL COMMENT '最后检测时间',
   `del_flag` varchar(1) DEFAULT NULL COMMENT '标记是否可用',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=91 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of brush_ticket_info
@@ -152,7 +152,7 @@ CREATE TABLE `success_order_info` (
   `parameter` varchar(100) DEFAULT NULL COMMENT '请求参数',
   `mobile` varchar(100) DEFAULT NULL COMMENT '手机号',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=793 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of success_order_info

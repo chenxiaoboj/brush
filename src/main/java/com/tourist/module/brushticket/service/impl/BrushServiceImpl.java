@@ -84,7 +84,7 @@ public class BrushServiceImpl implements BrushService {
             resultString = "票量不足，部分游客可能抢不到票！";
             logger.info("票量不足，部分游客可能抢不到票！");
         }
-        List<List<Paramet>> parameters = this.getParameterList(parameterList, map, number.get());
+        List<List<Paramet>> parameters = this.getParameterList(parameterList, map, touristInfoList.size());
         parameters.forEach(parametList -> {
             this.sendRequest(parametList);
         });
@@ -157,20 +157,24 @@ public class BrushServiceImpl implements BrushService {
         List<List<Paramet>> lists = Lists.newArrayList();
         //人数index
         AtomicInteger index = new AtomicInteger();
-        //总票量 number
+        //已用票数
         AtomicInteger valueNumber = new AtomicInteger();
+        AtomicInteger parameterIndex = new AtomicInteger();
         timeAndNumberMap.forEach((key, value) -> {
             List<Paramet> list = Lists.newArrayList();
             //3.00-3.30 ,50
             //人数
             int count = 0;
-            if (value < parameterList.get(index.get()).getTouristInfoList().size()+1) {
+            if (value < parameterList.get(index.get()).getTouristInfoList().size() + 1) {
                 return;
             }
             valueNumber.addAndGet(value);
+            if (valueNumber.get()<number){
+                logger.info("已用票数小于总人数！可以继续");
+            }
             for (int i = 0; i < value; i++) {
                 try {
-                    count += (parameterList.get(index.get() + i).getTouristInfoList().size() + 1);
+                    count += (parameterList.get(parameterIndex.get() + i).getTouristInfoList().size() + 1);
                 } catch (IndexOutOfBoundsException e) {
                     logger.info("所有游客已经分配完毕，剩余票量充足-----" + e);
                     return;
@@ -182,7 +186,7 @@ public class BrushServiceImpl implements BrushService {
                     break;
                 }
             }
-            index.addAndGet(value + 1);
+            index.addAndGet(1);
             lists.add(list);
         });
         return lists;
