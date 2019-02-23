@@ -25,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -42,7 +43,7 @@ import java.util.stream.Collectors;
 public class BrushServiceImpl implements BrushService {
 
     private static final Logger logger = LoggerFactory.getLogger(BrushServiceImpl.class);
-    private static final String YLXS_URL = "https://937707mltg.sjdzp.cn/Miniwx/Index/getDamoYlxsTimeList.json?goods_id=1843845&play_date=2019-02-22";
+    private static final String YLXS_URL = "https://937707mltg.sjdzp.cn/Miniwx/Index/getDamoYlxsTimeList.json?goods_id=";
     private static final String IP_URL = "http://www.89ip.cn/";
 
     @Resource
@@ -61,7 +62,7 @@ public class BrushServiceImpl implements BrushService {
      * @param goodId
      */
     @Override
-    public String brush(String goodId) {
+    public String brush(String goodId, Double coefficient) {
         //总游客量
         String resultString = "";
         List<TouristInfo> touristInfoList = touristInfoDao.findAll();
@@ -70,8 +71,9 @@ public class BrushServiceImpl implements BrushService {
         touristRemark.forEach(touristInfo -> {
             remarksList.add(touristInfo.getRemarks());
         });
+        //请求参数（已经分组的游客）
         List<Paramet> parameterList = this.getParamet(touristInfoList, goodId, remarksList);
-        Map<String, Integer> map = this.getDamoYlxsTimeList();
+        Map<String, Integer> map = this.getDamoYlxsTimeList(goodId);
         if (map == null) {
             resultString = "------------获取余票结果失败";
             return "------------获取余票结果失败";
@@ -82,9 +84,9 @@ public class BrushServiceImpl implements BrushService {
         });
         if (number.get() < touristInfoList.size()) {
             resultString = "票量不足，部分游客可能抢不到票！";
-            logger.info("票量不足，部分游客可能抢不到票！");
+            logger.info("票量不足，部分游客可能抢不到票！------------游客量：" + touristInfoList.size() + "---票总量：" + number.get());
         }
-        List<List<Paramet>> parameters = this.getParameterList(parameterList, map, touristInfoList.size());
+        List<List<Paramet>> parameters = this.getParameterList(parameterList, map, touristInfoList.size(), number.get(), coefficient);
         parameters.forEach(parametList -> {
             this.sendRequest(parametList);
         });
@@ -92,9 +94,9 @@ public class BrushServiceImpl implements BrushService {
     }
 
     @Override
-    public String getIps() {
+    public String getIps(Integer count) {
         List<BrushTicketInfo> list = Lists.newArrayList();
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < count; i++) {
             try {
                 Document document = Jsoup.connect(IP_URL + "index_" + i + ".html").get();
                 Elements elements = document.body().selectFirst("tbody").select("tr");
@@ -124,15 +126,14 @@ public class BrushServiceImpl implements BrushService {
     /**
      * 获取余票信息
      */
-    public Map<String, Integer> getDamoYlxsTimeList() {
-        ResponseEntity<String> responseEntity = restTemplate.getForEntity(YLXS_URL, String.class);
+    public Map<String, Integer> getDamoYlxsTimeList(String goodId) {
+        ResponseEntity<String> responseEntity = restTemplate.getForEntity(YLXS_URL + goodId + "&play_date=", String.class);
         JSONObject resultJson = JSONObject.parseObject(responseEntity.getBody());
         if (!StringUtils.equalsIgnoreCase("true", resultJson.getString("success"))) {
             logger.info("------------获取余票结果失败");
             return null;
         }
-        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000013");
-        List<Map<String, Integer>> numberList = Lists.newArrayList();
+        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000014");
         Map<String, Integer> map = Maps.newHashMap();
         jsonArray.forEach(jsonObject -> {
             JSONObject jsonObject1 = (JSONObject) jsonObject;
@@ -149,45 +150,75 @@ public class BrushServiceImpl implements BrushService {
     /**
      * 根据各个时间点的剩余票量分发游客任务
      *
-     * @param parameterList
-     * @param timeAndNumberMap
+     * @param parameterList    分发参数
+     * @param timeAndNumberMap 时间参数和当前票量
+     * @param peopleNumber     总游客数量
+     * @param piaoNumber       票总量
+     * @param coefficient      抢票系数（当前时间票量*系数=当前抢票任务量）
      * @return
      */
-    public List<List<Paramet>> getParameterList(List<Paramet> parameterList, Map<String, Integer> timeAndNumberMap, Integer number) {
+    public List<List<Paramet>> getParameterList(List<Paramet> parameterList, Map<String, Integer> timeAndNumberMap, Integer peopleNumber, Integer piaoNumber, Double coefficient) {
         List<List<Paramet>> lists = Lists.newArrayList();
-        //人数index
-        AtomicInteger index = new AtomicInteger();
+
         //已用票数
         AtomicInteger valueNumber = new AtomicInteger();
+
+        //参数列表下标
         AtomicInteger parameterIndex = new AtomicInteger();
+        //遍历时间---当前时间票量
         timeAndNumberMap.forEach((key, value) -> {
-            List<Paramet> list = Lists.newArrayList();
-            //3.00-3.30 ,50
-            //人数
-            int count = 0;
-            if (value < parameterList.get(index.get()).getTouristInfoList().size() + 1) {
+            if (valueNumber.get() == peopleNumber) {
                 return;
             }
-            valueNumber.addAndGet(value);
-            if (valueNumber.get()<number){
-                logger.info("已用票数小于总人数！可以继续");
-            }
-            for (int i = 0; i < value; i++) {
-                try {
-                    count += (parameterList.get(parameterIndex.get() + i).getTouristInfoList().size() + 1);
-                } catch (IndexOutOfBoundsException e) {
-                    logger.info("所有游客已经分配完毕，剩余票量充足-----" + e);
-                    return;
-                }
-                if (count < value) {
-                    parameterList.get(index.get() + i).setTimeSlotDamoylxs(key);
-                    list.add(parameterList.get(index.get() + i));
-                } else {
+            //人数 index
+            AtomicInteger index = new AtomicInteger();
+            //当前时间点抢票任务量
+            int renwuNumber = (int) (value * coefficient);
+            List<Paramet> list = Lists.newArrayList();
+            for (int i = 0; i < parameterList.size(); i++) {
+                if (index.get() >= renwuNumber) {
+                    logger.info("该时间段票数分发完毕！----" + key + "任务量1:---" + renwuNumber);
                     break;
                 }
+                if (parameterIndex.get() >= parameterList.size()) {
+                    logger.info("该时间段票数分发完毕！----" + key + "任务量2:---" + renwuNumber);
+                    break;
+                }
+                //本次请求参数有多少人
+                int renshu = parameterList.get(parameterIndex.get()).getTouristInfoList().size() + 1;
+                index.addAndGet(renshu);
+                //设置本次请求时间段参数
+                parameterList.get(parameterIndex.get()).setTimeSlotDamoylxs(key);
+                list.add(parameterList.get(parameterIndex.get()));
+                parameterIndex.addAndGet(1);
             }
-            index.addAndGet(1);
+            valueNumber.addAndGet(index.get());
             lists.add(list);
+//            //人数
+//            int count = 0;
+//            if (value < parameterList.get(index.get()).getTouristInfoList().size() + 1) {
+//                return;
+//            }
+//            valueNumber.addAndGet(value);
+//            if (valueNumber.get() < peopleNumber) {
+//                logger.info("已用票数小于总人数！可以继续");
+//            }
+//            for (int i = 0; i < value; i++) {
+//                try {
+//                    count += (parameterList.get(parameterIndex.get() + i).getTouristInfoList().size() + 1);
+//                } catch (IndexOutOfBoundsException e) {
+//                    logger.info("所有游客已经分配完毕，剩余票量充足-----" + e);
+//                    return;
+//                }
+//                if (count < value) {
+//                    parameterList.get(index.get() + i).setTimeSlotDamoylxs(key);
+//                    list.add(parameterList.get(index.get() + i));
+//                } else {
+//                    break;
+//                }
+//            }
+//            index.addAndGet(1);
+//            lists.add(list);
         });
         return lists;
     }
@@ -235,30 +266,30 @@ public class BrushServiceImpl implements BrushService {
      */
     public void sendRequest(List<Paramet> parametList) {
         List<BrushTicketInfo> brushTicketDtoList = brushTicketInfoDao.findAll();
-//        AtomicInteger i = new AtomicInteger();
-//        parametList.forEach(paramet -> {
-//            List<NameValuePair> list = Lists.newArrayList();
-//            list.add(new BasicNameValuePair("goods_id", paramet.getGoodsId()));
-//            list.add(new BasicNameValuePair("play_date", paramet.getPlayDate()));
-//            list.add(new BasicNameValuePair("amount", paramet.getAmount() + ""));
-//            list.add(new BasicNameValuePair("time_slot_damoylxs[]", paramet.getTimeSlotDamoylxs()));
-//            list.add(new BasicNameValuePair("name", paramet.getName()));
-//            list.add(new BasicNameValuePair("mobile", paramet.getMobile()));
-//            list.add(new BasicNameValuePair("id_number", paramet.getIdNumber()));
-//            List<TouristInfo> list1 = paramet.getTouristInfoList();
-//            list1.forEach(clientInfoFirst -> {
-//                NameValuePair nameValuePair = new BasicNameValuePair("id_number_list[]", clientInfoFirst.getIdNumber());
-//                NameValuePair nameValuePair1 = new BasicNameValuePair("player_name_list[]", clientInfoFirst.getName());
-//                NameValuePair nameValuePair2 = new BasicNameValuePair("player_mobile_list[]", clientInfoFirst.getMobile());
-//                list.add(nameValuePair);
-//                list.add(nameValuePair1);
-//                list.add(nameValuePair2);
-//            });
-//            //参数
-//            NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
-//            //@TODO 获取代理信息，每个线程分发一个代理ip
-//            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile());
-//            i.addAndGet(1);
-//        });
+        AtomicInteger i = new AtomicInteger();
+        parametList.forEach(paramet -> {
+            List<NameValuePair> list = Lists.newArrayList();
+            list.add(new BasicNameValuePair("goods_id", paramet.getGoodsId()));
+            list.add(new BasicNameValuePair("play_date", paramet.getPlayDate()));
+            list.add(new BasicNameValuePair("amount", paramet.getAmount() + ""));
+            list.add(new BasicNameValuePair("time_slot_damoylxs[]", paramet.getTimeSlotDamoylxs()));
+            list.add(new BasicNameValuePair("name", paramet.getName()));
+            list.add(new BasicNameValuePair("mobile", paramet.getMobile()));
+            list.add(new BasicNameValuePair("id_number", paramet.getIdNumber()));
+            List<TouristInfo> list1 = paramet.getTouristInfoList();
+            list1.forEach(clientInfoFirst -> {
+                NameValuePair nameValuePair = new BasicNameValuePair("id_number_list[]", clientInfoFirst.getIdNumber());
+                NameValuePair nameValuePair1 = new BasicNameValuePair("player_name_list[]", clientInfoFirst.getName());
+                NameValuePair nameValuePair2 = new BasicNameValuePair("player_mobile_list[]", clientInfoFirst.getMobile());
+                list.add(nameValuePair);
+                list.add(nameValuePair1);
+                list.add(nameValuePair2);
+            });
+            //参数
+            NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
+            //@TODO 获取代理信息，每个线程分发一个代理ip
+            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile());
+            i.addAndGet(1);
+        });
     }
 }

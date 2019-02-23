@@ -43,7 +43,7 @@ public class BrushComponent {
     @Resource
     private SuccessOrderInfoDao successOrderInfoDao;
 
-    @Async
+//    @Async
     public String getEwmUrl(BrushTicketInfo brushTicketDto, NameValuePair[] parameter, String mobile) {
         BrushExceptionInfo exceptionInfo = new BrushExceptionInfo();
         //设置代理IP

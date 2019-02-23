@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 
 /**
  * @author chenx 2019-02-22 16:34
@@ -23,12 +24,12 @@ public class TouristController {
 
     @ApiOperation(value = "抓取ip")
     @GetMapping(value = "/getIps")
-    public String getIps() {
-        return brushService.getIps();
+    public String getIps(@RequestParam Integer count) {
+        return brushService.getIps(count);
     }
     @ApiOperation(value = "开始刷票")
     @GetMapping(value = "/brush")
-    public String brush(@RequestParam String goodId) {
-        return brushService.brush(goodId);
+    public String brush(@RequestParam String goodId, @RequestParam Double coefficient) {
+        return brushService.brush(goodId,coefficient);
     }
 }
