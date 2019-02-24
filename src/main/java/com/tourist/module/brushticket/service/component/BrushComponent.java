@@ -43,17 +43,18 @@ public class BrushComponent {
     @Resource
     private SuccessOrderInfoDao successOrderInfoDao;
 
-//    @Async
+    @Async
     public String getEwmUrl(BrushTicketInfo brushTicketDto, NameValuePair[] parameter, String mobile) {
+        logger.info(brushTicketDto.getHostName());
         BrushExceptionInfo exceptionInfo = new BrushExceptionInfo();
-        //设置代理IP
-        HttpHost proxy = new HttpHost(brushTicketDto.getHostName(), brushTicketDto.getPort(), "http");
-        CloseableHttpClient httpclient = HttpClients
-                .custom()
-                .setDefaultCookieStore(new BasicCookieStore())
-                .setProxy(proxy)
-                .build();
         try {
+            //设置代理IP
+            HttpHost proxy = new HttpHost(brushTicketDto.getHostName(), brushTicketDto.getPort(), "http");
+            CloseableHttpClient httpclient = HttpClients
+                    .custom()
+                    .setDefaultCookieStore(new BasicCookieStore())
+                    .setProxy(proxy)
+                    .build();
             CloseableHttpResponse http1 = httpclient.execute(RequestBuilder.post()
                     .setUri(new URI(V_URL))
                     .setHeader("Accept", "application/json, text/javascript, */*; q=0.01")

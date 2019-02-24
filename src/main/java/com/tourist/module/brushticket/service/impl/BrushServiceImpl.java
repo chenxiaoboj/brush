@@ -11,6 +11,8 @@ import com.tourist.module.brushticket.entity.BrushTicketInfo;
 import com.tourist.module.brushticket.entity.TouristInfo;
 import com.tourist.module.brushticket.service.BrushService;
 import com.tourist.module.brushticket.service.component.BrushComponent;
+import com.tourist.module.utils.IpUtil;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -24,6 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
+import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.ParseException;
@@ -95,6 +99,28 @@ public class BrushServiceImpl implements BrushService {
 
     @Override
     public String getIps(Integer count) {
+        if (count < 10) {
+            List<BrushTicketInfo> newList = Lists.newArrayList();
+            String input = null;
+            try {
+                input = FileUtils.readFileToString(new File("D:\\GIT\\ideaProject\\brush\\ips.json"), "UTF-8");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            JSONObject.parseObject(input).getJSONArray("data").forEach(ipJson -> {
+                JSONObject jsonIp = (JSONObject) ipJson;
+                String[] ipString = jsonIp.getString("IP").split(":");
+                if (IpUtil.checkIp(ipString[0], Integer.parseInt(ipString[1]))) {
+                    BrushTicketInfo brushTicketInfo = new BrushTicketInfo();
+                    brushTicketInfo.setDelFlag("1");
+                    brushTicketInfo.setHostName(ipString[0]);
+                    brushTicketInfo.setPort(Integer.parseInt(ipString[1]));
+                    newList.add(brushTicketInfo);
+                }
+            });
+            brushTicketInfoDao.save(newList);
+            return "success";
+        }
         List<BrushTicketInfo> list = Lists.newArrayList();
         for (int i = 0; i < count; i++) {
             try {
@@ -140,7 +166,7 @@ public class BrushServiceImpl implements BrushService {
             String id = jsonObject1.getString("id");
             String[] tt = jsonObject1.getString("text").split(":");
             Integer number = Integer.parseInt(tt[tt.length - 1]);
-            if (number > 0) {
+            if (number > 5) {
                 map.put(id, number);
             }
         });
@@ -159,10 +185,8 @@ public class BrushServiceImpl implements BrushService {
      */
     public List<List<Paramet>> getParameterList(List<Paramet> parameterList, Map<String, Integer> timeAndNumberMap, Integer peopleNumber, Integer piaoNumber, Double coefficient) {
         List<List<Paramet>> lists = Lists.newArrayList();
-
         //已用票数
         AtomicInteger valueNumber = new AtomicInteger();
-
         //参数列表下标
         AtomicInteger parameterIndex = new AtomicInteger();
         //遍历时间---当前时间票量
@@ -194,31 +218,6 @@ public class BrushServiceImpl implements BrushService {
             }
             valueNumber.addAndGet(index.get());
             lists.add(list);
-//            //人数
-//            int count = 0;
-//            if (value < parameterList.get(index.get()).getTouristInfoList().size() + 1) {
-//                return;
-//            }
-//            valueNumber.addAndGet(value);
-//            if (valueNumber.get() < peopleNumber) {
-//                logger.info("已用票数小于总人数！可以继续");
-//            }
-//            for (int i = 0; i < value; i++) {
-//                try {
-//                    count += (parameterList.get(parameterIndex.get() + i).getTouristInfoList().size() + 1);
-//                } catch (IndexOutOfBoundsException e) {
-//                    logger.info("所有游客已经分配完毕，剩余票量充足-----" + e);
-//                    return;
-//                }
-//                if (count < value) {
-//                    parameterList.get(index.get() + i).setTimeSlotDamoylxs(key);
-//                    list.add(parameterList.get(index.get() + i));
-//                } else {
-//                    break;
-//                }
-//            }
-//            index.addAndGet(1);
-//            lists.add(list);
         });
         return lists;
     }
@@ -265,7 +264,7 @@ public class BrushServiceImpl implements BrushService {
      * @param parametList
      */
     public void sendRequest(List<Paramet> parametList) {
-        List<BrushTicketInfo> brushTicketDtoList = brushTicketInfoDao.findAll();
+        List<BrushTicketInfo> brushTicketDtoList = brushTicketInfoDao.findAllByDelFlag("1");
         AtomicInteger i = new AtomicInteger();
         parametList.forEach(paramet -> {
             List<NameValuePair> list = Lists.newArrayList();

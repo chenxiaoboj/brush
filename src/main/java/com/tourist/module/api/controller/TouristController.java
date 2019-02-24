@@ -22,14 +22,15 @@ public class TouristController {
     @Resource
     private BrushService brushService;
 
-    @ApiOperation(value = "抓取ip")
+    @ApiOperation(value = "抓取ip  count>10：去抓页面ip，count<10 从json文件获取ip")
     @GetMapping(value = "/getIps")
     public String getIps(@RequestParam Integer count) {
         return brushService.getIps(count);
     }
+
     @ApiOperation(value = "开始刷票")
     @GetMapping(value = "/brush")
     public String brush(@RequestParam String goodId, @RequestParam Double coefficient) {
-        return brushService.brush(goodId,coefficient);
+        return brushService.brush(goodId, coefficient);
     }
 }
