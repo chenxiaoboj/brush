@@ -10,10 +10,10 @@ import java.net.*;
  * @author admin 2019-02-23 20:27
  */
 public class IpUtil {
-    public boolean checkIp() {
+    public boolean checkIp(String hostName,Integer port) {
         Socket socket = new Socket();
         try {
-            socket.connect(new InetSocketAddress("101.205.55.214", 1658));
+            socket.connect(new InetSocketAddress(hostName, port));
         } catch (IOException e) {
             e.printStackTrace();
             System.out.printf("fail");
