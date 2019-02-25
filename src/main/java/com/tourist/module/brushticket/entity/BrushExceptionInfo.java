@@ -1,9 +1,6 @@
 package com.tourist.module.brushticket.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 /**
  * @author chenx 2019-02-20 18:39
@@ -16,10 +13,12 @@ public class BrushExceptionInfo {
     /**
      * 异常信息
      */
+    @Column(length = 500)
     private String message;
     /**
      * 异常的cookie
      */
+    @Column(length = 500)
     private String cookie;
     /**
      * 异常步骤(1:验证码 2：下订单 3：获取支付验证码)

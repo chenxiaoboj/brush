@@ -1,9 +1,6 @@
 package com.tourist.module.brushticket.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 /**
  * @author chenx 2019-02-21 17:55
@@ -20,6 +17,7 @@ public class SuccessOrderInfo {
     /**
      * 请求参数
      */
+    @Column(length = 1000)
     private String parameter;
     /**
      * 手机号

@@ -129,17 +129,19 @@ public class BrushServiceImpl implements BrushService {
                 elements.forEach(element -> {
                     BrushTicketInfo brushTicketInfo = new BrushTicketInfo();
                     Elements tdElements = element.select("td");
-                    brushTicketInfo.setHostName(tdElements.get(0).text());
-                    brushTicketInfo.setPort(Integer.parseInt(tdElements.get(1).text()));
-                    brushTicketInfo.setAddress(tdElements.get(2).text());
-                    brushTicketInfo.setOperatorType(tdElements.get(3).text());
-                    brushTicketInfo.setDelFlag("0");
-                    try {
-                        brushTicketInfo.setEndTime(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").parse(tdElements.get(4).text()));
-                    } catch (ParseException e) {
-                        e.printStackTrace();
+                    if (Integer.parseInt(tdElements.get(1).text()) >= 9999) {
+                        brushTicketInfo.setHostName(tdElements.get(0).text());
+                        brushTicketInfo.setPort(Integer.parseInt(tdElements.get(1).text()));
+                        brushTicketInfo.setAddress(tdElements.get(2).text());
+                        brushTicketInfo.setOperatorType(tdElements.get(3).text());
+                        brushTicketInfo.setDelFlag("0");
+                        try {
+                            brushTicketInfo.setEndTime(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").parse(tdElements.get(4).text()));
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+                        list.add(brushTicketInfo);
                     }
-                    list.add(brushTicketInfo);
                 });
             } catch (IOException e) {
                 e.printStackTrace();
@@ -159,7 +161,7 @@ public class BrushServiceImpl implements BrushService {
             logger.info("------------获取余票结果失败");
             return null;
         }
-        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000014");
+        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000013");
         Map<String, Integer> map = Maps.newHashMap();
         jsonArray.forEach(jsonObject -> {
             JSONObject jsonObject1 = (JSONObject) jsonObject;
@@ -269,17 +271,19 @@ public class BrushServiceImpl implements BrushService {
         parametList.forEach(paramet -> {
             List<NameValuePair> list = Lists.newArrayList();
             list.add(new BasicNameValuePair("goods_id", paramet.getGoodsId()));
+            list.add(new BasicNameValuePair("pintuan_id", ""));
             list.add(new BasicNameValuePair("play_date", paramet.getPlayDate()));
-            list.add(new BasicNameValuePair("amount", paramet.getAmount() + ""));
             list.add(new BasicNameValuePair("time_slot_damoylxs[]", paramet.getTimeSlotDamoylxs()));
+            list.add(new BasicNameValuePair("amount", paramet.getAmount() + ""));
+            list.add(new BasicNameValuePair("g_batch_type", "2"));
             list.add(new BasicNameValuePair("name", paramet.getName()));
             list.add(new BasicNameValuePair("mobile", paramet.getMobile()));
             list.add(new BasicNameValuePair("id_number", paramet.getIdNumber()));
             List<TouristInfo> list1 = paramet.getTouristInfoList();
             list1.forEach(clientInfoFirst -> {
-                NameValuePair nameValuePair = new BasicNameValuePair("id_number_list[]", clientInfoFirst.getIdNumber());
                 NameValuePair nameValuePair1 = new BasicNameValuePair("player_name_list[]", clientInfoFirst.getName());
                 NameValuePair nameValuePair2 = new BasicNameValuePair("player_mobile_list[]", clientInfoFirst.getMobile());
+                NameValuePair nameValuePair = new BasicNameValuePair("id_number_list[]", clientInfoFirst.getIdNumber());
                 list.add(nameValuePair);
                 list.add(nameValuePair1);
                 list.add(nameValuePair2);

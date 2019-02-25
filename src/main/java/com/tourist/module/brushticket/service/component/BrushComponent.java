@@ -43,7 +43,7 @@ public class BrushComponent {
     @Resource
     private SuccessOrderInfoDao successOrderInfoDao;
 
-    @Async
+//    @Async
     public String getEwmUrl(BrushTicketInfo brushTicketDto, NameValuePair[] parameter, String mobile) {
         logger.info(brushTicketDto.getHostName());
         BrushExceptionInfo exceptionInfo = new BrushExceptionInfo();
@@ -103,7 +103,6 @@ public class BrushComponent {
                     .setHeader("Accept-Language", "zh-CN,zh;q=0.9")
                     .setHeader("Cookie", cookie)
                     .addParameter("orders_verify", verify)
-                    .addParameter("pintuan_id", "")
                     .addParameters(parameter)
                     .setConfig(RequestConfig.custom().setRedirectsEnabled(false).setConnectTimeout(5000).build())
                     .build());
