@@ -5,6 +5,8 @@ import org.springframework.stereotype.Component;
 
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * @author admin 2019-02-23 20:27
@@ -16,7 +18,7 @@ public class IpUtil {
             socket.connect(new InetSocketAddress(hostName, port));
         } catch (Exception e) {
 //            e.printStackTrace();
-            System.out.println("fail");
+            System.out.println(LocalDateTime.now()+"--------fail");
             return false;
         } finally {
             try {

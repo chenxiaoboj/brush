@@ -151,6 +151,28 @@ public class BrushServiceImpl implements BrushService {
         return "success";
     }
 
+    @Override
+    public String checkIp() {
+        List<BrushTicketInfo> brushTicketDtoList = brushTicketInfoDao.findAll();
+        List<BrushTicketInfo> newList = Lists.newArrayList();
+        brushTicketDtoList.forEach(brushTicketInfo -> {
+            if (IpUtil.checkIp(brushTicketInfo.getHostName(),brushTicketInfo.getPort())){
+                brushTicketInfo.setDelFlag("1");
+                newList.add(brushTicketInfo);
+            }
+        });
+        brushTicketInfoDao.save(newList);
+        return null;
+    }
+
+    @Override
+    public void testThread() {
+        List<BrushTicketInfo> brushTicketDtoList = brushTicketInfoDao.findAllByDelFlag("1");
+        brushTicketDtoList.forEach(brushTicketInfo -> {
+            brushComponent.test(brushTicketInfo);
+        });
+    }
+
     /**
      * 获取余票信息
      */
@@ -161,7 +183,7 @@ public class BrushServiceImpl implements BrushService {
             logger.info("------------获取余票结果失败");
             return null;
         }
-        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000013");
+        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000014");
         Map<String, Integer> map = Maps.newHashMap();
         jsonArray.forEach(jsonObject -> {
             JSONObject jsonObject1 = (JSONObject) jsonObject;
@@ -291,7 +313,7 @@ public class BrushServiceImpl implements BrushService {
             //参数
             NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
             //@TODO 获取代理信息，每个线程分发一个代理ip
-            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile());
+            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile(),paramet.getAmount());
             i.addAndGet(1);
         });
     }

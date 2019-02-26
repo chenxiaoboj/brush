@@ -23,6 +23,18 @@ public class SuccessOrderInfo {
      * 手机号
      */
     private String mobile;
+    /**
+     * 手机号
+     */
+    private Integer number;
+
+    public Integer getNumber() {
+        return number;
+    }
+
+    public void setNumber(Integer number) {
+        this.number = number;
+    }
 
     public String getMobile() {
         return mobile;

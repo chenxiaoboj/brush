@@ -33,6 +33,19 @@ public class BrushExceptionInfo {
      * 订单id
      */
     private String authOrdersId;
+    /**
+     * 订单参数
+     */
+    @Column(length = 1000)
+    private String parameter;
+
+    public String getParameter() {
+        return parameter;
+    }
+
+    public void setParameter(String parameter) {
+        this.parameter = parameter;
+    }
 
     public String getAuthOrdersId() {
         return authOrdersId;

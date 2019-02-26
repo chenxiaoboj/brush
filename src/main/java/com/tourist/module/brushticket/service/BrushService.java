@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 public interface BrushService {
     /**
      * 开始刷票
+     *
      * @param goodId
      * @return
      */
@@ -15,7 +16,20 @@ public interface BrushService {
 
     /**
      * 抓取代理ip库
+     *
      * @return
      */
     String getIps(Integer count);
+
+    /**
+     * 检验ip
+     *
+     * @return
+     */
+    String checkIp();
+
+    /**
+     * 测试异步
+     */
+    void testThread();
 }

@@ -7,6 +7,7 @@ import com.tourist.module.brushticket.entity.BrushExceptionInfo;
 import com.tourist.module.brushticket.entity.BrushTicketInfo;
 import com.tourist.module.brushticket.entity.SuccessOrderInfo;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
@@ -43,8 +44,8 @@ public class BrushComponent {
     @Resource
     private SuccessOrderInfoDao successOrderInfoDao;
 
-//    @Async
-    public String getEwmUrl(BrushTicketInfo brushTicketDto, NameValuePair[] parameter, String mobile) {
+    @Async
+    public String getEwmUrl(BrushTicketInfo brushTicketDto, NameValuePair[] parameter, String mobile, Integer amount) {
         logger.info(brushTicketDto.getHostName());
         BrushExceptionInfo exceptionInfo = new BrushExceptionInfo();
         try {
@@ -86,9 +87,11 @@ public class BrushComponent {
             String cookie = http1.getHeaders("Set-Cookie")[4].getValue() + "; " + http1.getHeaders("Set-Cookie")[0].getValue();
             logger.info("------验证码-------：" + verify);
             logger.info("------cookie-------：" + cookie);
+            logger.info("线程名称：" + Thread.currentThread().getName() + " be ready to read data!");
             exceptionInfo.setCookie(cookie);
             http1.close();
             Thread.sleep(5000);
+            logger.info("---------------------》》》无返回值延迟3秒：");
             CloseableHttpResponse http2 = httpclient.execute(RequestBuilder.post()
                     .setUri(new URI(CREATE_ORDER_URL))
                     .setHeader("Host", "937707mltg.sjdzp.cn")
@@ -120,8 +123,9 @@ public class BrushComponent {
             logger.info("------------------auth_orders_id-------------" + auth_orders_id);
             exceptionInfo.setAuthOrdersId(auth_orders_id);
             http2.close();
+
             String payUrl = PAY_URL + auth_orders_id;
-            CloseableHttpResponse http3 = httpclient.execute(RequestBuilder.get(payUrl).setHeader(new BasicHeader("", ""))
+            CloseableHttpResponse http3 = httpclient.execute(RequestBuilder.get(payUrl)
                     .setHeader("Accept", "application/json, text/javascript, */*; q=0.01")
                     .setHeader("Accept-Encoding", "gzip, deflate, br")
                     .setHeader("Accept-Language", "zh-CN,zh;q=0.9")
@@ -150,6 +154,7 @@ public class BrushComponent {
             successOrderInfo.setEwmUrl(ewmUrl);
             successOrderInfo.setParameter(Arrays.toString(parameter));
             successOrderInfo.setMobile(mobile);
+            successOrderInfo.setNumber(amount);
             successOrderInfoDao.save(successOrderInfo);
             httpclient.close();
         } catch (IOException e) {
@@ -158,14 +163,25 @@ public class BrushComponent {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
-        } catch (Exception e){
-            logger.info("其他异常信息"+e.getMessage());
+        } catch (Exception e) {
+            logger.info("其他异常信息" + e.getMessage());
             exceptionInfo.setMessage(e.getMessage());
             exceptionInfo.setCount(4);
             exceptionInfoDao.save(exceptionInfo);
             return null;
         }
         return null;
+    }
+
+    @Async
+    public void test(BrushTicketInfo brushTicketDto){
+        logger.info("线程名称：" + Thread.currentThread().getName() + " ------"+"ip地址：" + brushTicketDto.getHostName() + "："+brushTicketDto.getPort());
+        try {
+            Thread.sleep(1000*3);
+            logger.info("线程名称：" + Thread.currentThread().getName() + " ------"+"ip地址：" + brushTicketDto.getHostName() + "："+brushTicketDto.getPort());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 }

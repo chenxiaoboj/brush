@@ -33,4 +33,16 @@ public class TouristController {
     public String brush(@RequestParam String goodId, @RequestParam Double coefficient) {
         return brushService.brush(goodId, coefficient);
     }
+    @ApiOperation(value = "筛选ip库")
+    @GetMapping(value = "/checkIp")
+    public String checkIp() {
+        return brushService.checkIp();
+    }
+
+    @ApiOperation(value = "testThread")
+    @GetMapping(value = "/testThread")
+    public String testThread() {
+         brushService.testThread();
+        return null;
+    }
 }
