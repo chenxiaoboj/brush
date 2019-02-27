@@ -122,6 +122,7 @@ public class BrushServiceImpl implements BrushService {
             return "success";
         }
         List<BrushTicketInfo> list = Lists.newArrayList();
+        Map<String,String> map = Maps.newHashMap();
         for (int i = 0; i < count; i++) {
             try {
                 Document document = Jsoup.connect(IP_URL + "index_" + i + ".html").get();
@@ -129,7 +130,7 @@ public class BrushServiceImpl implements BrushService {
                 elements.forEach(element -> {
                     BrushTicketInfo brushTicketInfo = new BrushTicketInfo();
                     Elements tdElements = element.select("td");
-                    if (Integer.parseInt(tdElements.get(1).text()) >= 9999) {
+                    if (Integer.parseInt(tdElements.get(1).text()) > 9999) {
                         brushTicketInfo.setHostName(tdElements.get(0).text());
                         brushTicketInfo.setPort(Integer.parseInt(tdElements.get(1).text()));
                         brushTicketInfo.setAddress(tdElements.get(2).text());
@@ -140,7 +141,10 @@ public class BrushServiceImpl implements BrushService {
                         } catch (ParseException e) {
                             e.printStackTrace();
                         }
-                        list.add(brushTicketInfo);
+                        if (!map.containsKey(brushTicketInfo.getHostName())){
+                            list.add(brushTicketInfo);
+                            map.put(brushTicketInfo.getHostName(),brushTicketInfo.getPort()+"");
+                        }
                     }
                 });
             } catch (IOException e) {
@@ -183,7 +187,7 @@ public class BrushServiceImpl implements BrushService {
             logger.info("------------获取余票结果失败");
             return null;
         }
-        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000014");
+        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000013");
         Map<String, Integer> map = Maps.newHashMap();
         jsonArray.forEach(jsonObject -> {
             JSONObject jsonObject1 = (JSONObject) jsonObject;

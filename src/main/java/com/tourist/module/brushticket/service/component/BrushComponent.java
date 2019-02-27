@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author chenx 2019-02-22 10:11
@@ -48,6 +50,8 @@ public class BrushComponent {
     public String getEwmUrl(BrushTicketInfo brushTicketDto, NameValuePair[] parameter, String mobile, Integer amount) {
         logger.info(brushTicketDto.getHostName());
         BrushExceptionInfo exceptionInfo = new BrushExceptionInfo();
+        exceptionInfo.setParameter(Arrays.toString(parameter));
+        exceptionInfo.setCreateTime(new Date());
         try {
             //设置代理IP
             HttpHost proxy = new HttpHost(brushTicketDto.getHostName(), brushTicketDto.getPort(), "http");
@@ -55,6 +59,7 @@ public class BrushComponent {
                     .custom()
                     .setDefaultCookieStore(new BasicCookieStore())
                     .setProxy(proxy)
+                    .setConnectionTimeToLive(1000*3,TimeUnit.MILLISECONDS)
                     .build();
             CloseableHttpResponse http1 = httpclient.execute(RequestBuilder.post()
                     .setUri(new URI(V_URL))
@@ -87,11 +92,10 @@ public class BrushComponent {
             String cookie = http1.getHeaders("Set-Cookie")[4].getValue() + "; " + http1.getHeaders("Set-Cookie")[0].getValue();
             logger.info("------验证码-------：" + verify);
             logger.info("------cookie-------：" + cookie);
-            logger.info("线程名称：" + Thread.currentThread().getName() + " be ready to read data!");
+            logger.info("线程名称：" + Thread.currentThread().getName() + "-----" + brushTicketDto.getHostName());
             exceptionInfo.setCookie(cookie);
             http1.close();
             Thread.sleep(5000);
-            logger.info("---------------------》》》无返回值延迟3秒：");
             CloseableHttpResponse http2 = httpclient.execute(RequestBuilder.post()
                     .setUri(new URI(CREATE_ORDER_URL))
                     .setHeader("Host", "937707mltg.sjdzp.cn")
@@ -123,7 +127,6 @@ public class BrushComponent {
             logger.info("------------------auth_orders_id-------------" + auth_orders_id);
             exceptionInfo.setAuthOrdersId(auth_orders_id);
             http2.close();
-
             String payUrl = PAY_URL + auth_orders_id;
             CloseableHttpResponse http3 = httpclient.execute(RequestBuilder.get(payUrl)
                     .setHeader("Accept", "application/json, text/javascript, */*; q=0.01")
@@ -155,6 +158,7 @@ public class BrushComponent {
             successOrderInfo.setParameter(Arrays.toString(parameter));
             successOrderInfo.setMobile(mobile);
             successOrderInfo.setNumber(amount);
+            successOrderInfo.setCreateTime(new Date());
             successOrderInfoDao.save(successOrderInfo);
             httpclient.close();
         } catch (IOException e) {
@@ -174,11 +178,11 @@ public class BrushComponent {
     }
 
     @Async
-    public void test(BrushTicketInfo brushTicketDto){
-        logger.info("线程名称：" + Thread.currentThread().getName() + " ------"+"ip地址：" + brushTicketDto.getHostName() + "："+brushTicketDto.getPort());
+    public void test(BrushTicketInfo brushTicketDto) {
+        logger.info("线程名称：" + Thread.currentThread().getName() + " ------" + "ip地址：" + brushTicketDto.getHostName() + "：" + brushTicketDto.getPort());
         try {
-            Thread.sleep(1000*3);
-            logger.info("线程名称：" + Thread.currentThread().getName() + " ------"+"ip地址：" + brushTicketDto.getHostName() + "："+brushTicketDto.getPort());
+            Thread.sleep(1000 * 3);
+            logger.info("线程名称：" + Thread.currentThread().getName() + " ------" + "ip地址：" + brushTicketDto.getHostName() + "：" + brushTicketDto.getPort());
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

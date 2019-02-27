@@ -1,6 +1,9 @@
 package com.tourist.module.brushticket.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import javax.persistence.*;
+import java.util.Date;
 
 /**
  * @author chenx 2019-02-20 18:39
@@ -10,6 +13,10 @@ public class BrushExceptionInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date createTime;
+
     /**
      * 异常信息
      */
@@ -38,6 +45,14 @@ public class BrushExceptionInfo {
      */
     @Column(length = 1000)
     private String parameter;
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
 
     public String getParameter() {
         return parameter;

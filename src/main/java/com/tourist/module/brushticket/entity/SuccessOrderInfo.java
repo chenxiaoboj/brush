@@ -1,6 +1,9 @@
 package com.tourist.module.brushticket.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import javax.persistence.*;
+import java.util.Date;
 
 /**
  * @author chenx 2019-02-21 17:55
@@ -10,6 +13,8 @@ public class SuccessOrderInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    private Date createTime;
     /**
      * 支付二维码地址
      */
@@ -27,6 +32,14 @@ public class SuccessOrderInfo {
      * 手机号
      */
     private Integer number;
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
 
     public Integer getNumber() {
         return number;
