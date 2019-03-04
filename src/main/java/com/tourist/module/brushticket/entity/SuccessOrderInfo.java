@@ -32,6 +32,10 @@ public class SuccessOrderInfo {
      * 手机号
      */
     private Integer number;
+    /**
+     * 获取单号url
+     */
+    private String  orderIdUrl;
 
     public Date getCreateTime() {
         return createTime;
@@ -79,5 +83,13 @@ public class SuccessOrderInfo {
 
     public void setParameter(String parameter) {
         this.parameter = parameter;
+    }
+
+    public String getOrderIdUrl() {
+        return orderIdUrl;
+    }
+
+    public void setOrderIdUrl(String orderIdUrl) {
+        this.orderIdUrl = orderIdUrl;
     }
 }

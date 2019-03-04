@@ -97,6 +97,24 @@ public class BrushServiceImpl implements BrushService {
         return resultString;
     }
 
+    public List<BrushTicketInfo>  getIp() {
+        List<BrushTicketInfo> ipMap = Lists.newArrayList();
+        String input = null;
+        try {
+            input = FileUtils.readFileToString(new File("D:\\GIT目录备份\\ideaProject\\ip.txt"), "UTF-8");
+            String[] ips = input.split(";");
+            for (int i = 0; i < ips.length; i++) {
+                BrushTicketInfo brushTicketInfo = new BrushTicketInfo();
+                brushTicketInfo.setHostName(ips[i].split(":")[0]);
+                brushTicketInfo.setPort(Integer.parseInt(ips[i].split(":")[1]));
+                ipMap.add(brushTicketInfo);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ipMap;
+    }
+
     @Override
     public String getIps(Integer count) {
         if (count < 10) {
@@ -122,7 +140,7 @@ public class BrushServiceImpl implements BrushService {
             return "success";
         }
         List<BrushTicketInfo> list = Lists.newArrayList();
-        Map<String,String> map = Maps.newHashMap();
+        Map<String, String> map = Maps.newHashMap();
         for (int i = 0; i < count; i++) {
             try {
                 Document document = Jsoup.connect(IP_URL + "index_" + i + ".html").get();
@@ -141,9 +159,9 @@ public class BrushServiceImpl implements BrushService {
                         } catch (ParseException e) {
                             e.printStackTrace();
                         }
-                        if (!map.containsKey(brushTicketInfo.getHostName())){
+                        if (!map.containsKey(brushTicketInfo.getHostName())) {
                             list.add(brushTicketInfo);
-                            map.put(brushTicketInfo.getHostName(),brushTicketInfo.getPort()+"");
+                            map.put(brushTicketInfo.getHostName(), brushTicketInfo.getPort() + "");
                         }
                     }
                 });
@@ -160,7 +178,7 @@ public class BrushServiceImpl implements BrushService {
         List<BrushTicketInfo> brushTicketDtoList = brushTicketInfoDao.findAll();
         List<BrushTicketInfo> newList = Lists.newArrayList();
         brushTicketDtoList.forEach(brushTicketInfo -> {
-            if (IpUtil.checkIp(brushTicketInfo.getHostName(),brushTicketInfo.getPort())){
+            if (IpUtil.checkIp(brushTicketInfo.getHostName(), brushTicketInfo.getPort())) {
                 brushTicketInfo.setDelFlag("1");
                 newList.add(brushTicketInfo);
             }
@@ -187,14 +205,14 @@ public class BrushServiceImpl implements BrushService {
             logger.info("------------获取余票结果失败");
             return null;
         }
-        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000013");
+        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000014");
         Map<String, Integer> map = Maps.newHashMap();
         jsonArray.forEach(jsonObject -> {
             JSONObject jsonObject1 = (JSONObject) jsonObject;
             String id = jsonObject1.getString("id");
             String[] tt = jsonObject1.getString("text").split(":");
             Integer number = Integer.parseInt(tt[tt.length - 1]);
-            if (number > 5) {
+            if (number > 5&&StringUtils.equalsIgnoreCase("false",jsonObject1.getString("disabled"))) {
                 map.put(id, number);
             }
         });
@@ -292,7 +310,8 @@ public class BrushServiceImpl implements BrushService {
      * @param parametList
      */
     public void sendRequest(List<Paramet> parametList) {
-        List<BrushTicketInfo> brushTicketDtoList = brushTicketInfoDao.findAllByDelFlag("1");
+//        List<BrushTicketInfo> brushTicketDtoList = brushTicketInfoDao.findAllByDelFlag("1");
+        List<BrushTicketInfo> brushTicketDtoList = this.getIp();
         AtomicInteger i = new AtomicInteger();
         parametList.forEach(paramet -> {
             List<NameValuePair> list = Lists.newArrayList();
@@ -317,7 +336,7 @@ public class BrushServiceImpl implements BrushService {
             //参数
             NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
             //@TODO 获取代理信息，每个线程分发一个代理ip
-            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile(),paramet.getAmount());
+            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile(), paramet.getAmount(),"1846446");
             i.addAndGet(1);
         });
     }

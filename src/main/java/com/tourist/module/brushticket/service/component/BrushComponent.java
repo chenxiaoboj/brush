@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.RequestBuilder;
@@ -29,6 +30,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -47,7 +49,7 @@ public class BrushComponent {
     private SuccessOrderInfoDao successOrderInfoDao;
 
     @Async
-    public String getEwmUrl(BrushTicketInfo brushTicketDto, NameValuePair[] parameter, String mobile, Integer amount) {
+    public String getEwmUrl(BrushTicketInfo brushTicketDto, NameValuePair[] parameter, String mobile, Integer amount,String goodId) {
         logger.info(brushTicketDto.getHostName());
         BrushExceptionInfo exceptionInfo = new BrushExceptionInfo();
         exceptionInfo.setParameter(Arrays.toString(parameter));
@@ -70,7 +72,7 @@ public class BrushComponent {
                     .setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
                     .setHeader("Host", "937707mltg.sjdzp.cn")
                     .setHeader("Origin", "https://937707mltg.sjdzp.cn")
-                    .setHeader("Referer", "https://937707mltg.sjdzp.cn/Miniwx/Index/buy.html?goods_id=1843845&form=1&cc=1")
+                    .setHeader("Referer", "https://937707mltg.sjdzp.cn/Miniwx/Index/buy.html?goods_id="+goodId+"&form=1&cc=1")
                     .setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36")
                     .setHeader("X-Requested-With", "XMLHttpRequest")
                     .addParameter("verify_type", "1")
@@ -105,7 +107,7 @@ public class BrushComponent {
                     .setHeader("X-Requested-With", "XMLHttpRequest")
                     .setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36")
                     .setHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-                    .setHeader("Referer", "https://937707mltg.sjdzp.cn/Miniwx/Index/buy.html?goods_id=1843845&form=1&cc=1")
+                    .setHeader("Referer", "https://937707mltg.sjdzp.cn/Miniwx/Index/buy.html?goods_id="+goodId+"&form=1&cc=1")
                     .setHeader("Accept-Encoding", "gzip, deflate, br")
                     .setHeader("Accept-Language", "zh-CN,zh;q=0.9")
                     .setHeader("Cookie", cookie)
@@ -128,6 +130,7 @@ public class BrushComponent {
             exceptionInfo.setAuthOrdersId(auth_orders_id);
             http2.close();
             String payUrl = PAY_URL + auth_orders_id;
+            Thread.sleep(1000*10);
             CloseableHttpResponse http3 = httpclient.execute(RequestBuilder.get(payUrl)
                     .setHeader("Accept", "application/json, text/javascript, */*; q=0.01")
                     .setHeader("Accept-Encoding", "gzip, deflate, br")
@@ -135,7 +138,7 @@ public class BrushComponent {
                     .setHeader("Connection", "keep-alive")
                     .setHeader("Cookie", cookie)
                     .setHeader("Host", "937707mltg.sjdzp.cn")
-                    .setHeader("Referer", "https://937707mltg.sjdzp.cn/Miniwx/Index/orderInfo.html?orders_id=3f45NCawA6bwJUIHHnuzow")
+                    .setHeader("Referer", "https://937707mltg.sjdzp.cn/Miniwx/Index/orderInfo.html?orders_id="+auth_orders_id)
                     .setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36")
                     .setHeader("X-Requested-With", "XMLHttpRequest")
                     .build());
@@ -159,20 +162,29 @@ public class BrushComponent {
             successOrderInfo.setMobile(mobile);
             successOrderInfo.setNumber(amount);
             successOrderInfo.setCreateTime(new Date());
+            successOrderInfo.setOrderIdUrl(payUrl);
             successOrderInfoDao.save(successOrderInfo);
             httpclient.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.info("其他异常信息" + e.getMessage());
+            exceptionInfo.setMessage(e.getMessage());
+            exceptionInfo.setCount(4);
+            exceptionInfoDao.save(exceptionInfo);
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            logger.info("其他异常信息" + e.getMessage());
+            exceptionInfo.setMessage(e.getMessage());
+            exceptionInfo.setCount(4);
+            exceptionInfoDao.save(exceptionInfo);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.info("其他异常信息" + e.getMessage());
+            exceptionInfo.setMessage(e.getMessage());
+            exceptionInfo.setCount(4);
+            exceptionInfoDao.save(exceptionInfo);
         } catch (Exception e) {
             logger.info("其他异常信息" + e.getMessage());
             exceptionInfo.setMessage(e.getMessage());
             exceptionInfo.setCount(4);
             exceptionInfoDao.save(exceptionInfo);
-            return null;
         }
         return null;
     }
@@ -186,6 +198,59 @@ public class BrushComponent {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    @Async
+    public void getEwm(){
+        List<BrushExceptionInfo> list = exceptionInfoDao.findAllByCountOrderByCreateTimeDesc(3);
+        list.forEach(brushExceptionInfo -> {
+            BrushExceptionInfo exceptionInfo = new BrushExceptionInfo();
+            CloseableHttpClient httpclient = HttpClients
+                    .custom()
+                    .setDefaultCookieStore(new BasicCookieStore())
+                    .setConnectionTimeToLive(1000*3,TimeUnit.MILLISECONDS)
+                    .build();
+            try{
+                CloseableHttpResponse http3 = httpclient.execute(RequestBuilder.get(brushExceptionInfo.getGetEwmUrl())
+                        .setHeader("Accept", "application/json, text/javascript, */*; q=0.01")
+                        .setHeader("Accept-Encoding", "gzip, deflate, br")
+                        .setHeader("Accept-Language", "zh-CN,zh;q=0.9")
+                        .setHeader("Connection", "keep-alive")
+                        .setHeader("Cookie", brushExceptionInfo.getCookie())
+                        .setHeader("Host", "937707mltg.sjdzp.cn")
+                        .setHeader("Referer", "https://937707mltg.sjdzp.cn/Miniwx/Index/orderInfo.html?orders_id="+brushExceptionInfo.getAuthOrdersId())
+                        .setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36")
+                        .setHeader("X-Requested-With", "XMLHttpRequest")
+                        .build());
+                String payResult = EntityUtils.toString(http3.getEntity());
+                JSONObject payJson = JSONObject.parseObject(payResult);
+                if (StringUtils.equalsIgnoreCase("false", payJson.getString("success")) || StringUtils.equalsIgnoreCase("false", payJson.getString("wait"))) {
+                    //判断获取支付二维码结果
+                    String errorMessage = payJson.getString("message");
+                    exceptionInfo.setMessage(errorMessage);
+                    exceptionInfo.setCount(3);
+                    exceptionInfo.setGetEwmUrl(brushExceptionInfo.getGetEwmUrl());
+                    exceptionInfoDao.save(exceptionInfo);
+                    System.out.println(errorMessage);
+                    return ;
+                }
+                String ewmUrl = JSONObject.parseObject(payResult).getJSONObject("data").getJSONObject("params").getString("wxpay_img_url");
+                logger.info("-------------------二维码地址-------------" + ewmUrl);
+                SuccessOrderInfo successOrderInfo = new SuccessOrderInfo();
+                successOrderInfo.setEwmUrl(ewmUrl);
+                successOrderInfo.setParameter(brushExceptionInfo.getParameter());
+                successOrderInfo.setMobile(brushExceptionInfo.getMobile());
+                successOrderInfo.setNumber(brushExceptionInfo.getNumber());
+                successOrderInfo.setOrderIdUrl(brushExceptionInfo.getGetEwmUrl());
+                successOrderInfo.setCreateTime(new Date());
+                successOrderInfoDao.save(successOrderInfo);
+                httpclient.close();
+            } catch (ClientProtocolException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
 }

@@ -46,6 +46,31 @@ public class BrushExceptionInfo {
     @Column(length = 1000)
     private String parameter;
 
+    /**
+     * 人数
+     */
+    private Integer number;
+    /**
+     * 手机号
+     */
+    private String mobile;
+
+    public Integer getNumber() {
+        return number;
+    }
+
+    public void setNumber(Integer number) {
+        this.number = number;
+    }
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
     public Date getCreateTime() {
         return createTime;
     }
