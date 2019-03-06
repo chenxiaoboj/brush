@@ -1,5 +1,6 @@
 package com.tourist.module.utils;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -28,5 +29,11 @@ public class IpUtil {
             }
         }
         return true;
+    }
+
+    public static void main(String[] args) {
+        for (int i = 0; i < 30; i++) {
+            System.out.println(RandomUtils.nextInt(0,20));
+        }
     }
 }

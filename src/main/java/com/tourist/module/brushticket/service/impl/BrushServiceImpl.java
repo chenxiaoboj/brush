@@ -7,12 +7,15 @@ import com.google.common.collect.Maps;
 import com.tourist.module.brushticket.dao.BrushTicketInfoDao;
 import com.tourist.module.brushticket.dao.TouristInfoDao;
 import com.tourist.module.brushticket.dto.Paramet;
+import com.tourist.module.brushticket.entity.BrushExceptionInfo;
 import com.tourist.module.brushticket.entity.BrushTicketInfo;
 import com.tourist.module.brushticket.entity.TouristInfo;
 import com.tourist.module.brushticket.service.BrushService;
 import com.tourist.module.brushticket.service.component.BrushComponent;
+import com.tourist.module.brushticket.service.component.FirstTest;
 import com.tourist.module.utils.IpUtil;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -37,6 +40,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -58,6 +62,8 @@ public class BrushServiceImpl implements BrushService {
     private RestTemplate restTemplate;
     @Resource
     private BrushTicketInfoDao brushTicketInfoDao;
+    @Resource
+    private FirstTest firstTest;
 
 
     /**
@@ -67,8 +73,17 @@ public class BrushServiceImpl implements BrushService {
      */
     @Override
     public String brush(String goodId, Double coefficient) {
-        //总游客量
+        if (coefficient>1){
+        brushComponent.getEwm();
+        return "success";
+        }
         String resultString = "";
+        Map<String, Integer> map = this.getDamoYlxsTimeList(goodId);
+        if (map == null) {
+            resultString = "------------获取余票结果失败";
+            return "------------获取余票结果失败";
+        }
+        //总游客量
         List<TouristInfo> touristInfoList = touristInfoDao.findAll();
         List<TouristInfo> touristRemark = touristInfoDao.getRemarks();
         List<String> remarksList = Lists.newArrayList();
@@ -77,11 +92,6 @@ public class BrushServiceImpl implements BrushService {
         });
         //请求参数（已经分组的游客）
         List<Paramet> parameterList = this.getParamet(touristInfoList, goodId, remarksList);
-        Map<String, Integer> map = this.getDamoYlxsTimeList(goodId);
-        if (map == null) {
-            resultString = "------------获取余票结果失败";
-            return "------------获取余票结果失败";
-        }
         AtomicInteger number = new AtomicInteger();
         map.forEach((key, value) -> {
             number.addAndGet(value);
@@ -91,17 +101,47 @@ public class BrushServiceImpl implements BrushService {
             logger.info("票量不足，部分游客可能抢不到票！------------游客量：" + touristInfoList.size() + "---票总量：" + number.get());
         }
         List<List<Paramet>> parameters = this.getParameterList(parameterList, map, touristInfoList.size(), number.get(), coefficient);
+//        Paramet paramet=parameters.get(0).get(0);
+//        List<BrushTicketInfo> brushTicketDtoList = this.getIp();
+//        List<NameValuePair> list = Lists.newArrayList();
+//        list.add(new BasicNameValuePair("goods_id", paramet.getGoodsId()));
+//        list.add(new BasicNameValuePair("pintuan_id", ""));
+//        list.add(new BasicNameValuePair("play_date", paramet.getPlayDate()));
+//        list.add(new BasicNameValuePair("time_slot_damoylxs[]", paramet.getTimeSlotDamoylxs()));
+//        list.add(new BasicNameValuePair("amount", paramet.getAmount() + ""));
+//        list.add(new BasicNameValuePair("g_batch_type", "2"));
+//        list.add(new BasicNameValuePair("name", paramet.getName()));
+//        list.add(new BasicNameValuePair("mobile", paramet.getMobile()));
+//        list.add(new BasicNameValuePair("id_number", paramet.getIdNumber()));
+//        List<TouristInfo> list1 = paramet.getTouristInfoList();
+//        list1.forEach(clientInfoFirst -> {
+//            NameValuePair nameValuePair1 = new BasicNameValuePair("player_name_list[]", clientInfoFirst.getName());
+//            NameValuePair nameValuePair2 = new BasicNameValuePair("player_mobile_list[]", clientInfoFirst.getMobile());
+//            NameValuePair nameValuePair = new BasicNameValuePair("id_number_list[]", clientInfoFirst.getIdNumber());
+//            list.add(nameValuePair);
+//            list.add(nameValuePair1);
+//            list.add(nameValuePair2);
+//        });
+//        //参数
+//        NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
+//        while (true) {
+//            if (StringUtils.equals("true",firstTest.firstTest(brushTicketDtoList.get(RandomUtils.nextInt(0,brushTicketDtoList.size())), nvps, paramet.getMobile(), paramet.getAmount(), "1843845"))) {
+//                break;
+//            }
+//        }
         parameters.forEach(parametList -> {
             this.sendRequest(parametList);
         });
+//        List<BrushExceptionInfo> list2 =
         return resultString;
     }
 
-    public List<BrushTicketInfo>  getIp() {
+
+    public List<BrushTicketInfo> getIp() {
         List<BrushTicketInfo> ipMap = Lists.newArrayList();
         String input = null;
         try {
-            input = FileUtils.readFileToString(new File("D:\\GIT目录备份\\ideaProject\\ip.txt"), "UTF-8");
+            input = FileUtils.readFileToString(new File("F:\\ideaProject\\brush\\ips.txt"), "UTF-8");
             String[] ips = input.split(";");
             for (int i = 0; i < ips.length; i++) {
                 BrushTicketInfo brushTicketInfo = new BrushTicketInfo();
@@ -205,14 +245,14 @@ public class BrushServiceImpl implements BrushService {
             logger.info("------------获取余票结果失败");
             return null;
         }
-        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000014");
+        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000013");
         Map<String, Integer> map = Maps.newHashMap();
         jsonArray.forEach(jsonObject -> {
             JSONObject jsonObject1 = (JSONObject) jsonObject;
             String id = jsonObject1.getString("id");
             String[] tt = jsonObject1.getString("text").split(":");
             Integer number = Integer.parseInt(tt[tt.length - 1]);
-            if (number > 5&&StringUtils.equalsIgnoreCase("false",jsonObject1.getString("disabled"))) {
+            if (number > 5 && StringUtils.equalsIgnoreCase("false", jsonObject1.getString("disabled"))) {
                 map.put(id, number);
             }
         });
@@ -335,8 +375,13 @@ public class BrushServiceImpl implements BrushService {
             });
             //参数
             NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
+//            while (true) {
+//                if (StringUtils.equals("true",firstTest.firstTest(brushTicketDtoList.get(RandomUtils.nextInt(0,brushTicketDtoList.size())), nvps, paramet.getMobile(), paramet.getAmount(), "1843845"))) {
+//                    break;
+//                }
+//            }
             //@TODO 获取代理信息，每个线程分发一个代理ip
-            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile(), paramet.getAmount(),"1846446");
+            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile(), paramet.getAmount(), "1843845");
             i.addAndGet(1);
         });
     }

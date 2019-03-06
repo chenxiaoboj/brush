@@ -54,6 +54,15 @@ public class BrushExceptionInfo {
      * 手机号
      */
     private String mobile;
+    private String delFlag;
+
+    public String getDelFlag() {
+        return delFlag;
+    }
+
+    public void setDelFlag(String delFlag) {
+        this.delFlag = delFlag;
+    }
 
     public Integer getNumber() {
         return number;
