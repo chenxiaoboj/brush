@@ -1,6 +1,9 @@
 package com.tourist.module.brushticket.service;
 
+import com.tourist.module.brushticket.entity.SuccessOrderInfo;
+
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @author chenx 2019-02-22 16:09
@@ -12,7 +15,27 @@ public interface BrushService {
      * @param goodId
      * @return
      */
-    String brush(String goodId, Double coefficient);
+    String brush(String goodId, Double coefficient, String ipUrl);
+
+    /**
+     * 处理异常数据
+     */
+    String disposeException();
+
+    /**
+     * 更改支付状态
+     */
+    String changeStatus(Integer id);
+
+    /**
+     * 测试异步
+     */
+    void testThread();
+
+    /**
+     * 测试异步
+     */
+    List<SuccessOrderInfo> getEwmList();
 
     /**
      * 抓取代理ip库
@@ -21,15 +44,4 @@ public interface BrushService {
      */
     String getIps(Integer count);
 
-    /**
-     * 检验ip
-     *
-     * @return
-     */
-    String checkIp();
-
-    /**
-     * 测试异步
-     */
-    void testThread();
 }

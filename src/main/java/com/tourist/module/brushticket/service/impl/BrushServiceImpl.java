@@ -5,14 +5,15 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.tourist.module.brushticket.dao.BrushTicketInfoDao;
+import com.tourist.module.brushticket.dao.SuccessOrderInfoDao;
 import com.tourist.module.brushticket.dao.TouristInfoDao;
 import com.tourist.module.brushticket.dto.Paramet;
 import com.tourist.module.brushticket.entity.BrushExceptionInfo;
 import com.tourist.module.brushticket.entity.BrushTicketInfo;
+import com.tourist.module.brushticket.entity.SuccessOrderInfo;
 import com.tourist.module.brushticket.entity.TouristInfo;
 import com.tourist.module.brushticket.service.BrushService;
 import com.tourist.module.brushticket.service.component.BrushComponent;
-import com.tourist.module.brushticket.service.component.FirstTest;
 import com.tourist.module.utils.IpUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomUtils;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
+import javax.transaction.Transactional;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -64,6 +66,8 @@ public class BrushServiceImpl implements BrushService {
     private BrushTicketInfoDao brushTicketInfoDao;
     @Resource
     private FirstTest firstTest;
+    @Resource
+    private SuccessOrderInfoDao successOrderInfoDao;
 
 
     /**
@@ -92,6 +96,11 @@ public class BrushServiceImpl implements BrushService {
         });
         //请求参数（已经分组的游客）
         List<Paramet> parameterList = this.getParamet(touristInfoList, goodId, remarksList);
+        Map<String, Integer> map = this.getDamoYlxsTimeList(goodId);
+        if (map == null) {
+            resultString = "------------获取余票结果失败";
+            return "------------获取余票结果失败";
+        }
         AtomicInteger number = new AtomicInteger();
         map.forEach((key, value) -> {
             number.addAndGet(value);
@@ -129,30 +138,12 @@ public class BrushServiceImpl implements BrushService {
 //                break;
 //            }
 //        }
+        //抓取ip地址
+        List<BrushTicketInfo> brushTicketDtoList = this.getIp(ipUrl);
         parameters.forEach(parametList -> {
-            this.sendRequest(parametList);
+            this.sendRequest(parametList, brushTicketDtoList);
         });
-//        List<BrushExceptionInfo> list2 =
         return resultString;
-    }
-
-
-    public List<BrushTicketInfo> getIp() {
-        List<BrushTicketInfo> ipMap = Lists.newArrayList();
-        String input = null;
-        try {
-            input = FileUtils.readFileToString(new File("F:\\ideaProject\\brush\\ips.txt"), "UTF-8");
-            String[] ips = input.split(";");
-            for (int i = 0; i < ips.length; i++) {
-                BrushTicketInfo brushTicketInfo = new BrushTicketInfo();
-                brushTicketInfo.setHostName(ips[i].split(":")[0]);
-                brushTicketInfo.setPort(Integer.parseInt(ips[i].split(":")[1]));
-                ipMap.add(brushTicketInfo);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return ipMap;
     }
 
     @Override
@@ -214,17 +205,20 @@ public class BrushServiceImpl implements BrushService {
     }
 
     @Override
-    public String checkIp() {
-        List<BrushTicketInfo> brushTicketDtoList = brushTicketInfoDao.findAll();
-        List<BrushTicketInfo> newList = Lists.newArrayList();
-        brushTicketDtoList.forEach(brushTicketInfo -> {
-            if (IpUtil.checkIp(brushTicketInfo.getHostName(), brushTicketInfo.getPort())) {
-                brushTicketInfo.setDelFlag("1");
-                newList.add(brushTicketInfo);
-            }
-        });
-        brushTicketInfoDao.save(newList);
-        return null;
+    public String disposeException() {
+        try {
+            brushComponent.getEwm();
+            return "success";
+        } catch (Exception e) {
+            return "系统异常";
+        }
+    }
+
+    @Override
+    @Transactional
+    public String changeStatus(Integer id) {
+        successOrderInfoDao.changeStatus(id);
+        return "success";
     }
 
     @Override
@@ -233,6 +227,12 @@ public class BrushServiceImpl implements BrushService {
         brushTicketDtoList.forEach(brushTicketInfo -> {
             brushComponent.test(brushTicketInfo);
         });
+    }
+
+    @Override
+    public List<SuccessOrderInfo> getEwmList() {
+        List<SuccessOrderInfo> list = successOrderInfoDao.findAll();
+        return null;
     }
 
     /**
@@ -349,9 +349,9 @@ public class BrushServiceImpl implements BrushService {
      *
      * @param parametList
      */
-    public void sendRequest(List<Paramet> parametList) {
+    public void sendRequest(List<Paramet> parametList, List<BrushTicketInfo> brushTicketDtoList) {
 //        List<BrushTicketInfo> brushTicketDtoList = brushTicketInfoDao.findAllByDelFlag("1");
-        List<BrushTicketInfo> brushTicketDtoList = this.getIp();
+//        List<BrushTicketInfo> brushTicketDtoList = this.getIp(ipUrl);
         AtomicInteger i = new AtomicInteger();
         parametList.forEach(paramet -> {
             List<NameValuePair> list = Lists.newArrayList();
@@ -375,14 +375,42 @@ public class BrushServiceImpl implements BrushService {
             });
             //参数
             NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
-//            while (true) {
-//                if (StringUtils.equals("true",firstTest.firstTest(brushTicketDtoList.get(RandomUtils.nextInt(0,brushTicketDtoList.size())), nvps, paramet.getMobile(), paramet.getAmount(), "1843845"))) {
-//                    break;
-//                }
-//            }
             //@TODO 获取代理信息，每个线程分发一个代理ip
-            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile(), paramet.getAmount(), "1843845");
+            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile(), paramet.getAmount(),"1846446");
             i.addAndGet(1);
         });
     }
+
+    //抓取ip
+    public List<BrushTicketInfo> getIp(String ipUrl) {
+        List<BrushTicketInfo> ipMap = Lists.newArrayList();
+        try {
+            Document document = Jsoup.connect(ipUrl).get();
+            String ips = document.body().text();
+            String[] ipArray = ips.split(";");
+            for (int i = 0; i < ipArray.length; i++) {
+                BrushTicketInfo brushTicketInfo = new BrushTicketInfo();
+                brushTicketInfo.setHostName(ipArray[i].split(":")[0]);
+                brushTicketInfo.setPort(Integer.parseInt(ipArray[i].split(":")[1]));
+                ipMap.add(brushTicketInfo);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+//        String input = null;
+//        try {
+//            input = FileUtils.readFileToString(new File("D:\\GIT目录备份\\ideaProject\\ip.txt"), "UTF-8");
+//            String[] ips = input.split(";");
+//            for (int i = 0; i < ips.length; i++) {
+//                BrushTicketInfo brushTicketInfo = new BrushTicketInfo();
+//                brushTicketInfo.setHostName(ips[i].split(":")[0]);
+//                brushTicketInfo.setPort(Integer.parseInt(ips[i].split(":")[1]));
+//                ipMap.add(brushTicketInfo);
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        return ipMap;
+    }
+
 }

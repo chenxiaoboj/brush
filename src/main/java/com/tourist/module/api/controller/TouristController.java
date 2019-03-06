@@ -22,27 +22,52 @@ public class TouristController {
     @Resource
     private BrushService brushService;
 
+    @ApiOperation(value = "开始刷票")
+    @GetMapping(value = "/brush")
+    public String brush(@RequestParam String goodId, @RequestParam Double coefficient, @RequestParam String ipUrl) {
+        return brushService.brush(goodId, coefficient, ipUrl);
+    }
+
+    @ApiOperation(value = "获取订单列表（支付二维码）地址列表")
+    @GetMapping(value = "/brush")
+    public String getEwmUrl(@RequestParam String goodId, @RequestParam Double coefficient) {
+        return null;
+    }
+
+    @ApiOperation(value = "处理状态为3的异常数据接口（支付二维码地址）")
+    @GetMapping(value = "/brush")
+    public String disposeException(@RequestParam String goodId, @RequestParam Double coefficient) {
+        return brushService.disposeException();
+    }
+    @ApiOperation(value = "处理状态为其他的异常数据接口（i/o异常）")
+    @GetMapping(value = "/brush")
+    public String disposeException(@RequestParam String goodId) {
+        return brushService.disposeException();
+    }
+
+    @ApiOperation(value = "测试是否可以刷票")
+    @GetMapping(value = "/brush")
+    public String testIsOk(@RequestParam String goodId, @RequestParam Double coefficient) {
+        return null;
+    }
+
+    @ApiOperation(value = "更改支付状态")
+    @GetMapping(value = "/brush")
+    public String changeStatus(@RequestParam Integer id) {
+        return brushService.changeStatus(id);
+    }
+
     @ApiOperation(value = "抓取ip  count>10：去抓页面ip，count<10 从json文件获取ip")
     @GetMapping(value = "/getIps")
     public String getIps(@RequestParam Integer count) {
         return brushService.getIps(count);
     }
 
-    @ApiOperation(value = "开始刷票")
-    @GetMapping(value = "/brush")
-    public String brush(@RequestParam String goodId, @RequestParam Double coefficient) {
-        return brushService.brush(goodId, coefficient);
-    }
-    @ApiOperation(value = "筛选ip库")
-    @GetMapping(value = "/checkIp")
-    public String checkIp() {
-        return brushService.checkIp();
-    }
-
     @ApiOperation(value = "testThread")
     @GetMapping(value = "/testThread")
     public String testThread() {
-         brushService.testThread();
+        brushService.testThread();
         return null;
     }
+
 }
