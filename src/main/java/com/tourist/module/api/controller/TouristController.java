@@ -28,15 +28,20 @@ public class TouristController {
         return brushService.brush(goodId, coefficient, ipUrl);
     }
 
-    @ApiOperation(value = "获取支付二维码地址列表")
+    @ApiOperation(value = "获取订单列表（支付二维码）地址列表")
     @GetMapping(value = "/brush")
     public String getEwmUrl(@RequestParam String goodId, @RequestParam Double coefficient) {
         return null;
     }
 
-    @ApiOperation(value = "处理异常数据接口")
+    @ApiOperation(value = "处理状态为3的异常数据接口（支付二维码地址）")
     @GetMapping(value = "/brush")
     public String disposeException(@RequestParam String goodId, @RequestParam Double coefficient) {
+        return brushService.disposeException();
+    }
+    @ApiOperation(value = "处理状态为其他的异常数据接口（i/o异常）")
+    @GetMapping(value = "/brush")
+    public String disposeException(@RequestParam String goodId) {
         return brushService.disposeException();
     }
 
