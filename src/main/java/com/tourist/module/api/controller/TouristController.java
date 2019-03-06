@@ -37,7 +37,7 @@ public class TouristController {
     @ApiOperation(value = "处理异常数据接口")
     @GetMapping(value = "/brush")
     public String disposeException(@RequestParam String goodId, @RequestParam Double coefficient) {
-        return null;
+        return brushService.disposeException();
     }
 
     @ApiOperation(value = "测试是否可以刷票")
@@ -49,19 +49,13 @@ public class TouristController {
     @ApiOperation(value = "更改支付状态")
     @GetMapping(value = "/brush")
     public String changeStatus(@RequestParam Integer id) {
-        return null;
+        return brushService.changeStatus(id);
     }
 
     @ApiOperation(value = "抓取ip  count>10：去抓页面ip，count<10 从json文件获取ip")
     @GetMapping(value = "/getIps")
     public String getIps(@RequestParam Integer count) {
         return brushService.getIps(count);
-    }
-
-    @ApiOperation(value = "筛选ip库")
-    @GetMapping(value = "/checkIp")
-    public String checkIp() {
-        return brushService.checkIp();
     }
 
     @ApiOperation(value = "testThread")

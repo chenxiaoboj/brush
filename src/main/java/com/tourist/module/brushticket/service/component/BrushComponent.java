@@ -231,7 +231,7 @@ public class BrushComponent {
                     exceptionInfo.setCount(3);
                     exceptionInfo.setGetEwmUrl(brushExceptionInfo.getGetEwmUrl());
                     exceptionInfoDao.save(exceptionInfo);
-                    System.out.println(errorMessage);
+                   logger.info("二次获取支付二维码失败"+errorMessage);
                     return ;
                 }
                 String ewmUrl = JSONObject.parseObject(payResult).getJSONObject("data").getJSONObject("params").getString("wxpay_img_url");

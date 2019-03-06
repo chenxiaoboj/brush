@@ -36,6 +36,18 @@ public class SuccessOrderInfo {
      * 获取单号url
      */
     private String  orderIdUrl;
+    /**
+     * 支付状态
+     */
+    private String  status;
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
     public Date getCreateTime() {
         return createTime;
