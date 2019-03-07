@@ -1,5 +1,7 @@
 package com.tourist.module.api.controller;
 
+import com.tourist.common.ApiResult;
+import com.tourist.module.brushticket.entity.SuccessOrderInfo;
 import com.tourist.module.brushticket.service.BrushService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @author chenx 2019-02-22 16:34
@@ -28,21 +31,28 @@ public class TouristController {
         return brushService.brush(goodId, coefficient, ipUrl);
     }
 
-    @ApiOperation(value = "获取订单列表（支付二维码）地址列表")
-    @GetMapping(value = "/getOrderList")
-    public String getEwmUrl(@RequestParam String goodId, @RequestParam Double coefficient) {
-        return null;
-    }
-
     @ApiOperation(value = "处理状态为3的异常数据接口（支付二维码地址）")
     @GetMapping(value = "/disposeException")
-    public String disposeException() {
+    public String getEwmUrl() {
         return brushService.disposeException();
     }
+
+    @ApiOperation(value = "获取订单列表（支付二维码）地址列表")
+    @GetMapping(value = "/getOrderList")
+    public ApiResult<List<SuccessOrderInfo>> disposeException() {
+        ApiResult<List<SuccessOrderInfo>> apiResult = new ApiResult<>();
+        List<SuccessOrderInfo> list = brushService.getEwmList();
+        apiResult.setCode("0000");
+        apiResult.setData(list);
+        apiResult.setCount(list.size()+"");
+        apiResult.setMsg("获取成功！");
+        return apiResult;
+    }
+
     @ApiOperation(value = "处理状态为其他的异常数据接口（i/o异常）")
     @GetMapping(value = "/disposeExceptionIO")
-    public String disposeException(@RequestParam String goodId) {
-        return brushService.disposeException();
+    public String disposeException(@RequestParam String ipUrl) {
+        return brushService.disposeExceptionIO(ipUrl);
     }
 
     @ApiOperation(value = "测试是否可以刷票")

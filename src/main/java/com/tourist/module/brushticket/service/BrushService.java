@@ -27,6 +27,12 @@ public interface BrushService {
      */
     String disposeException();
 
+
+    /**
+     * IO 处理异常数据
+     */
+    String disposeExceptionIO(String ipUrl);
+
     /**
      * 更改支付状态
      */

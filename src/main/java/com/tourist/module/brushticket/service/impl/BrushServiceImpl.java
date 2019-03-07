@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.tourist.module.brushticket.dao.BrushTicketInfoDao;
+import com.tourist.module.brushticket.dao.ExceptionInfoDao;
 import com.tourist.module.brushticket.dao.SuccessOrderInfoDao;
 import com.tourist.module.brushticket.dao.TouristInfoDao;
 import com.tourist.module.brushticket.dto.Paramet;
@@ -68,6 +69,8 @@ public class BrushServiceImpl implements BrushService {
     private FirstTest firstTest;
     @Resource
     private SuccessOrderInfoDao successOrderInfoDao;
+    @Resource
+    private ExceptionInfoDao exceptionInfoDao;
 
 
     /**
@@ -147,6 +150,29 @@ public class BrushServiceImpl implements BrushService {
     }
 
     @Override
+    public String disposeExceptionIO(String ipUrl) {
+        Map<String, Integer> map = this.getDamoYlxsTimeList("1843845");
+        map.forEach((key, value) -> {
+
+        });
+        List<BrushExceptionInfo> exceptionInfoList = exceptionInfoDao.findAllByCountAndDelFlag(4, "0");
+        List<BrushTicketInfo> brushTicketDtoList = this.getIp(ipUrl);
+        AtomicInteger i = new AtomicInteger();
+        exceptionInfoList.forEach(brushExceptionInfo -> {
+            List<NameValuePair> list = Lists.newArrayList();
+            String s = brushExceptionInfo.getParameter().replace(" ", "");
+            String[] params = s.substring(1, s.length() - 1).split(",");
+            for (int i1 = 0; i1 < params.length; i1++) {
+                String para[] = params[i1].split("=");
+                list.add(new BasicNameValuePair(para[0], para[1]));
+            }
+            NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
+            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, brushExceptionInfo.getMobile(), brushExceptionInfo.getNumber(), "1843845");
+        });
+        return null;
+    }
+
+    @Override
     @Transactional
     public String changeStatus(Integer id) {
         successOrderInfoDao.changeStatus(id);
@@ -164,7 +190,7 @@ public class BrushServiceImpl implements BrushService {
     @Override
     public List<SuccessOrderInfo> getEwmList() {
         List<SuccessOrderInfo> list = successOrderInfoDao.findAll();
-        return null;
+        return list;
     }
 
     /**
@@ -306,7 +332,7 @@ public class BrushServiceImpl implements BrushService {
             //参数
             NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
             //@TODO 获取代理信息，每个线程分发一个代理ip
-            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile(), paramet.getAmount(), "1846446");
+            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile(), paramet.getAmount(), "1843845");
             i.addAndGet(1);
         });
     }
