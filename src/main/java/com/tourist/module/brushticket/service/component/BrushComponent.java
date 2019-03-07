@@ -93,8 +93,6 @@ public class BrushComponent {
                 return null;
             }
             String verify = JSONObject.parseObject(result).getString("verify");
-//            String[] cookie1 = http1.getHeaders("Set-Cookie")[4].getValue().split(";")[0].split("=");
-//            String[] sessid = http1.getHeaders("Set-Cookie")[0].getValue().split(";")[0].split("=");
             String cookie = http1.getHeaders("Set-Cookie")[4].getValue() + "; " + http1.getHeaders("Set-Cookie")[0].getValue();
             logger.info("------验证码-------：" + verify);
             logger.info("------cookie-------：" + cookie);

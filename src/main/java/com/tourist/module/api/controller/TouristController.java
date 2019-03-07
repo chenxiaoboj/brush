@@ -29,39 +29,34 @@ public class TouristController {
     }
 
     @ApiOperation(value = "获取订单列表（支付二维码）地址列表")
-    @GetMapping(value = "/brush")
+    @GetMapping(value = "/getOrderList")
     public String getEwmUrl(@RequestParam String goodId, @RequestParam Double coefficient) {
         return null;
     }
 
     @ApiOperation(value = "处理状态为3的异常数据接口（支付二维码地址）")
-    @GetMapping(value = "/brush")
-    public String disposeException(@RequestParam String goodId, @RequestParam Double coefficient) {
+    @GetMapping(value = "/disposeException")
+    public String disposeException() {
         return brushService.disposeException();
     }
     @ApiOperation(value = "处理状态为其他的异常数据接口（i/o异常）")
-    @GetMapping(value = "/brush")
+    @GetMapping(value = "/disposeExceptionIO")
     public String disposeException(@RequestParam String goodId) {
         return brushService.disposeException();
     }
 
     @ApiOperation(value = "测试是否可以刷票")
-    @GetMapping(value = "/brush")
-    public String testIsOk(@RequestParam String goodId, @RequestParam Double coefficient) {
-        return null;
+    @GetMapping(value = "/testIsOk")
+    public String testIsOk(@RequestParam String ipUrl) {
+        return brushService.testOk(ipUrl);
     }
 
     @ApiOperation(value = "更改支付状态")
-    @GetMapping(value = "/brush")
+    @GetMapping(value = "/changeStatus")
     public String changeStatus(@RequestParam Integer id) {
         return brushService.changeStatus(id);
     }
 
-    @ApiOperation(value = "抓取ip  count>10：去抓页面ip，count<10 从json文件获取ip")
-    @GetMapping(value = "/getIps")
-    public String getIps(@RequestParam Integer count) {
-        return brushService.getIps(count);
-    }
 
     @ApiOperation(value = "testThread")
     @GetMapping(value = "/testThread")

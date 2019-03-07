@@ -18,6 +18,11 @@ public interface BrushService {
     String brush(String goodId, Double coefficient, String ipUrl);
 
     /**
+     * 测试是否可以刷票
+     */
+    String testOk(String ipUrl);
+
+    /**
      * 处理异常数据
      */
     String disposeException();
@@ -37,11 +42,5 @@ public interface BrushService {
      */
     List<SuccessOrderInfo> getEwmList();
 
-    /**
-     * 抓取代理ip库
-     *
-     * @return
-     */
-    String getIps(Integer count);
 
 }

@@ -2,10 +2,8 @@ package com.tourist.module.brushticket.service.component;
 
 import com.alibaba.fastjson.JSONObject;
 import com.tourist.module.brushticket.dao.ExceptionInfoDao;
-import com.tourist.module.brushticket.dao.SuccessOrderInfoDao;
 import com.tourist.module.brushticket.entity.BrushExceptionInfo;
 import com.tourist.module.brushticket.entity.BrushTicketInfo;
-import com.tourist.module.brushticket.entity.SuccessOrderInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.NameValuePair;
@@ -40,13 +38,11 @@ public class FirstTest {
     @Resource
     private ExceptionInfoDao exceptionInfoDao;
 
-    public String firstTest(BrushTicketInfo brushTicketDto, NameValuePair[] parameter, String mobile, Integer amount, String goodId) {
+    public String firstTest(BrushTicketInfo brushTicketDto, NameValuePair[] parameter, String goodId) {
         logger.info(brushTicketDto.getHostName());
         BrushExceptionInfo exceptionInfo = new BrushExceptionInfo();
         exceptionInfo.setParameter(Arrays.toString(parameter));
         exceptionInfo.setCreateTime(new Date());
-        exceptionInfo.setMobile(mobile);
-        exceptionInfo.setNumber(amount);
         exceptionInfo.setDelFlag("test");
         try {
             //设置代理IP
@@ -117,25 +113,25 @@ public class FirstTest {
             http2.close();
             httpclient.close();
         } catch (IOException e) {
-            logger.info("其他异常信息" + e.getMessage());
+            logger.info("test 其他异常信息" + e.getMessage());
             exceptionInfo.setMessage(e.getMessage());
             exceptionInfo.setCount(4);
             exceptionInfoDao.save(exceptionInfo);
             return null;
         } catch (URISyntaxException e) {
-            logger.info("其他异常信息" + e.getMessage());
+            logger.info("test 其他异常信息" + e.getMessage());
             exceptionInfo.setMessage(e.getMessage());
             exceptionInfo.setCount(4);
             exceptionInfoDao.save(exceptionInfo);
             return null;
         } catch (InterruptedException e) {
-            logger.info("其他异常信息" + e.getMessage());
+            logger.info("test 其他异常信息" + e.getMessage());
             exceptionInfo.setMessage(e.getMessage());
             exceptionInfo.setCount(4);
             exceptionInfoDao.save(exceptionInfo);
             return null;
         } catch (Exception e) {
-            logger.info("其他异常信息" + e.getMessage());
+            logger.info("test 其他异常信息" + e.getMessage());
             exceptionInfo.setMessage(e.getMessage());
             exceptionInfo.setCount(4);
             exceptionInfoDao.save(exceptionInfo);
