@@ -22,6 +22,7 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -50,13 +51,14 @@ public class BrushComponent {
     private SuccessOrderInfoDao successOrderInfoDao;
 
     @Async
-    public String getEwmUrl(BrushTicketInfo brushTicketDto, NameValuePair[] parameter, String mobile, Integer amount, String goodId) {
+    public String getEwmUrl(BrushTicketInfo brushTicketDto, NameValuePair[] parameter, String mobile, Integer amount, String goodId, String name) {
         logger.info(brushTicketDto.getHostName());
         BrushExceptionInfo exceptionInfo = new BrushExceptionInfo();
         exceptionInfo.setParameter(Arrays.toString(parameter));
         exceptionInfo.setCreateTime(new Date());
         exceptionInfo.setMobile(mobile);
         exceptionInfo.setNumber(amount);
+        exceptionInfo.setName(name);
         exceptionInfo.setDelFlag("0");
         try {
             //设置代理IP
@@ -165,6 +167,7 @@ public class BrushComponent {
             successOrderInfo.setNumber(amount);
             successOrderInfo.setCreateTime(new Date());
             successOrderInfo.setOrderIdUrl(payUrl);
+            successOrderInfo.setName(name);
             successOrderInfoDao.save(successOrderInfo);
             httpclient.close();
         } catch (IOException e) {
@@ -204,10 +207,11 @@ public class BrushComponent {
 
     @Async
     public void getEwm() {
-        List<BrushExceptionInfo> list = exceptionInfoDao.findAllByCountAndDelFlag(3,"0");
+        List<BrushExceptionInfo> list = exceptionInfoDao.findAllByCountAndDelFlag(3, "0");
         List<BrushExceptionInfo> listNew = Lists.newArrayList();
         list.forEach(brushExceptionInfo -> {
             BrushExceptionInfo exceptionInfo = new BrushExceptionInfo();
+            BeanUtils.copyProperties(brushExceptionInfo, exceptionInfo);
             CloseableHttpClient httpclient = HttpClients
                     .custom()
                     .setDefaultCookieStore(new BasicCookieStore())
@@ -227,6 +231,7 @@ public class BrushComponent {
                         .build());
                 String payResult = EntityUtils.toString(http3.getEntity());
                 JSONObject payJson = JSONObject.parseObject(payResult);
+                exceptionInfo.setCreateTime(new Date());
                 if (StringUtils.equalsIgnoreCase("false", payJson.getString("success")) || StringUtils.equalsIgnoreCase("false", payJson.getString("wait"))) {
                     //判断获取支付二维码结果
                     String errorMessage = payJson.getString("message");
@@ -234,8 +239,8 @@ public class BrushComponent {
                     exceptionInfo.setCount(3);
                     exceptionInfo.setGetEwmUrl(brushExceptionInfo.getGetEwmUrl());
                     exceptionInfoDao.save(exceptionInfo);
-                   logger.info("二次获取支付二维码失败"+errorMessage);
-                    return ;
+                    logger.info("二次获取支付二维码失败--------" + errorMessage);
+                    return;
                 }
                 String ewmUrl = JSONObject.parseObject(payResult).getJSONObject("data").getJSONObject("params").getString("wxpay_img_url");
                 logger.info("-------------------二维码地址-------------" + ewmUrl);
@@ -245,6 +250,7 @@ public class BrushComponent {
                 successOrderInfo.setMobile(brushExceptionInfo.getMobile());
                 successOrderInfo.setNumber(brushExceptionInfo.getNumber());
                 successOrderInfo.setOrderIdUrl(brushExceptionInfo.getGetEwmUrl());
+                successOrderInfo.setName(brushExceptionInfo.getName());
                 successOrderInfo.setCreateTime(new Date());
                 successOrderInfoDao.save(successOrderInfo);
                 brushExceptionInfo.setDelFlag("1");

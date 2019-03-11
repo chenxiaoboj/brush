@@ -55,6 +55,15 @@ public class BrushExceptionInfo {
      */
     private String mobile;
     private String delFlag;
+    private String name;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public String getDelFlag() {
         return delFlag;

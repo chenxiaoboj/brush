@@ -41,10 +41,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -152,9 +149,6 @@ public class BrushServiceImpl implements BrushService {
     @Override
     public String disposeExceptionIO(String ipUrl) {
         Map<String, Integer> map = this.getDamoYlxsTimeList("1843845");
-        map.forEach((key, value) -> {
-
-        });
         List<BrushExceptionInfo> exceptionInfoList = exceptionInfoDao.findAllByCountAndDelFlag(4, "0");
         List<BrushTicketInfo> brushTicketDtoList = this.getIp(ipUrl);
         AtomicInteger i = new AtomicInteger();
@@ -164,12 +158,25 @@ public class BrushServiceImpl implements BrushService {
             String[] params = s.substring(1, s.length() - 1).split(",");
             for (int i1 = 0; i1 < params.length; i1++) {
                 String para[] = params[i1].split("=");
-                list.add(new BasicNameValuePair(para[0], para[1]));
+                String value;
+                try {
+                    value = para[1];
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    value = "";
+                }
+                list.add(new BasicNameValuePair(para[0], value));
             }
             NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
-            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, brushExceptionInfo.getMobile(), brushExceptionInfo.getNumber(), "1843845");
+            logger.info("-处理IO异常数据-------------：" + list.toString());
+            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps,
+                    brushExceptionInfo.getMobile(), brushExceptionInfo.getNumber(), "1843845", brushExceptionInfo.getName());
+            i.addAndGet(1);
         });
         return null;
+    }
+
+    public void exceptionIO() {
+
     }
 
     @Override
@@ -332,8 +339,13 @@ public class BrushServiceImpl implements BrushService {
             //参数
             NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
             //@TODO 获取代理信息，每个线程分发一个代理ip
-            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile(), paramet.getAmount(), "1843845");
             i.addAndGet(1);
+            brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile(), paramet.getAmount(), "1843845", paramet.getName());
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         });
     }
 
@@ -349,6 +361,7 @@ public class BrushServiceImpl implements BrushService {
                 brushTicketInfo.setHostName(ipArray[i].split(":")[0]);
                 brushTicketInfo.setPort(Integer.parseInt(ipArray[i].split(":")[1]));
                 ipMap.add(brushTicketInfo);
+                logger.info(ipArray[i].split(":")[0]+":"+ipArray[i].split(":")[1]);
             }
         } catch (IOException e) {
             e.printStackTrace();
