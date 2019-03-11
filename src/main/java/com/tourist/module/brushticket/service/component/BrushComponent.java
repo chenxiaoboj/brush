@@ -45,6 +45,7 @@ public class BrushComponent {
     private static final String V_URL = "https://937707mltg.sjdzp.cn/Miniwx/Index/getOrdersVerify.json";
     private static final String CREATE_ORDER_URL = "https://937707mltg.sjdzp.cn/Miniwx/Index/orders.json";
     private static final String PAY_URL = "https://937707mltg.sjdzp.cn/Miniwx/Index/swiftPay.json?orders_id=";
+    private static final String BASE_SUCCESS = "https://937707mltg.sjdzp.cn/Miniwx/Index/orderInfo.html?orders_id=";
     @Resource
     private ExceptionInfoDao exceptionInfoDao;
     @Resource
@@ -130,11 +131,10 @@ public class BrushComponent {
                 return errorMessage;
             }
             String auth_orders_id = JSONObject.parseObject(orderResult).getJSONObject("data").getString("auth_orders_id");
-            logger.info("------------------auth_orders_id-------------" + auth_orders_id);
+            logger.info("-------auth_orders_id-------------" + auth_orders_id);
             exceptionInfo.setAuthOrdersId(auth_orders_id);
             http2.close();
             String payUrl = PAY_URL + auth_orders_id;
-            Thread.sleep(1000 * 10);
             CloseableHttpResponse http3 = httpclient.execute(RequestBuilder.get(payUrl)
                     .setHeader("Accept", "application/json, text/javascript, */*; q=0.01")
                     .setHeader("Accept-Encoding", "gzip, deflate, br")
@@ -159,19 +159,20 @@ public class BrushComponent {
                 return null;
             }
             String ewmUrl = JSONObject.parseObject(payResult).getJSONObject("data").getJSONObject("params").getString("wxpay_img_url");
-            logger.info("-------------------二维码地址-------------" + ewmUrl);
+            logger.info("-------------二维码地址-------------" + ewmUrl);
             SuccessOrderInfo successOrderInfo = new SuccessOrderInfo();
             successOrderInfo.setEwmUrl(ewmUrl);
             successOrderInfo.setParameter(Arrays.toString(parameter));
             successOrderInfo.setMobile(mobile);
             successOrderInfo.setNumber(amount);
             successOrderInfo.setCreateTime(new Date());
+            successOrderInfo.setSuccessUrl(BASE_SUCCESS + auth_orders_id);
             successOrderInfo.setOrderIdUrl(payUrl);
             successOrderInfo.setName(name);
             successOrderInfoDao.save(successOrderInfo);
             httpclient.close();
         } catch (IOException e) {
-            logger.info("其他异常信息" + e.getMessage());
+            logger.info("其他异常信息:" + e.getMessage());
             exceptionInfo.setMessage(e.getMessage());
             exceptionInfo.setCount(4);
             exceptionInfoDao.save(exceptionInfo);
@@ -208,14 +209,12 @@ public class BrushComponent {
     @Async
     public void getEwm() {
         List<BrushExceptionInfo> list = exceptionInfoDao.findAllByCountAndDelFlag(3, "0");
-        List<BrushExceptionInfo> listNew = Lists.newArrayList();
         list.forEach(brushExceptionInfo -> {
             BrushExceptionInfo exceptionInfo = new BrushExceptionInfo();
-            BeanUtils.copyProperties(brushExceptionInfo, exceptionInfo);
+            exceptionInfo.setDelFlag("0");
             CloseableHttpClient httpclient = HttpClients
                     .custom()
                     .setDefaultCookieStore(new BasicCookieStore())
-//                    .setConnectionTimeToLive(1000 * 3, TimeUnit.MILLISECONDS)
                     .build();
             try {
                 CloseableHttpResponse http3 = httpclient.execute(RequestBuilder.get(brushExceptionInfo.getGetEwmUrl())
@@ -235,7 +234,7 @@ public class BrushComponent {
                 if (StringUtils.equalsIgnoreCase("false", payJson.getString("success")) || StringUtils.equalsIgnoreCase("false", payJson.getString("wait"))) {
                     //判断获取支付二维码结果
                     String errorMessage = payJson.getString("message");
-                    exceptionInfo.setMessage(errorMessage);
+                    exceptionInfo.setMessage("二次获取支付二维码失败"+errorMessage);
                     exceptionInfo.setCount(3);
                     exceptionInfo.setGetEwmUrl(brushExceptionInfo.getGetEwmUrl());
                     exceptionInfoDao.save(exceptionInfo);
@@ -252,9 +251,9 @@ public class BrushComponent {
                 successOrderInfo.setOrderIdUrl(brushExceptionInfo.getGetEwmUrl());
                 successOrderInfo.setName(brushExceptionInfo.getName());
                 successOrderInfo.setCreateTime(new Date());
+                successOrderInfo.setSuccessUrl(BASE_SUCCESS+brushExceptionInfo.getAuthOrdersId());
                 successOrderInfoDao.save(successOrderInfo);
                 brushExceptionInfo.setDelFlag("1");
-                listNew.add(brushExceptionInfo);
                 httpclient.close();
             } catch (ClientProtocolException e) {
                 logger.info("其他异常信息" + e.getMessage());
@@ -268,7 +267,7 @@ public class BrushComponent {
                 exceptionInfoDao.save(exceptionInfo);
             }
         });
-        exceptionInfoDao.save(listNew);
+        exceptionInfoDao.save(list);
     }
 
 }

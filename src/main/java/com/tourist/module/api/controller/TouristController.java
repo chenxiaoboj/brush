@@ -1,6 +1,7 @@
 package com.tourist.module.api.controller;
 
 import com.tourist.common.ApiResult;
+import com.tourist.module.brushticket.entity.BrushExceptionInfo;
 import com.tourist.module.brushticket.entity.SuccessOrderInfo;
 import com.tourist.module.brushticket.service.BrushService;
 import io.swagger.annotations.Api;
@@ -65,6 +66,12 @@ public class TouristController {
     @GetMapping(value = "/changeStatus")
     public String changeStatus(@RequestParam Integer id) {
         return brushService.changeStatus(id);
+    }
+
+    @ApiOperation(value = "查看异常数据")
+    @GetMapping(value = "/getExecptionList")
+    public List<BrushExceptionInfo> getExecptionList() {
+        return brushService.getExceptionList();
     }
 
 

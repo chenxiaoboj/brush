@@ -13,7 +13,7 @@ public class SuccessOrderInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date createTime;
     /**
      * 支付二维码地址
@@ -35,13 +35,29 @@ public class SuccessOrderInfo {
     /**
      * 获取单号url
      */
-    private String  orderIdUrl;
+    private String orderIdUrl;
     /**
      * 支付状态
      */
-    private String  status;
+    private String status;
 
+    /**
+     * 姓名
+     */
     private String name;
+
+    /**
+     * 成功地址
+     */
+    private String successUrl;
+
+    public String getSuccessUrl() {
+        return successUrl;
+    }
+
+    public void setSuccessUrl(String successUrl) {
+        this.successUrl = successUrl;
+    }
 
     public String getName() {
         return name;

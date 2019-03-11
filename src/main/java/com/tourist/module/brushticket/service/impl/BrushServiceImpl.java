@@ -16,15 +16,12 @@ import com.tourist.module.brushticket.entity.TouristInfo;
 import com.tourist.module.brushticket.service.BrushService;
 import com.tourist.module.brushticket.service.component.BrushComponent;
 import com.tourist.module.brushticket.service.component.FirstTest;
-import com.tourist.module.utils.IpUtil;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -33,16 +30,11 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
-import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -148,11 +140,14 @@ public class BrushServiceImpl implements BrushService {
 
     @Override
     public String disposeExceptionIO(String ipUrl) {
-        Map<String, Integer> map = this.getDamoYlxsTimeList("1843845");
         List<BrushExceptionInfo> exceptionInfoList = exceptionInfoDao.findAllByCountAndDelFlag(4, "0");
         List<BrushTicketInfo> brushTicketDtoList = this.getIp(ipUrl);
         AtomicInteger i = new AtomicInteger();
         exceptionInfoList.forEach(brushExceptionInfo -> {
+            String time = this.getTime("1843845");
+            if (StringUtils.isBlank(time)) {
+                return;
+            }
             List<NameValuePair> list = Lists.newArrayList();
             String s = brushExceptionInfo.getParameter().replace(" ", "");
             String[] params = s.substring(1, s.length() - 1).split(",");
@@ -173,6 +168,11 @@ public class BrushServiceImpl implements BrushService {
             i.addAndGet(1);
         });
         return null;
+    }
+
+    @Override
+    public List<BrushExceptionInfo> getExceptionList() {
+        return exceptionInfoDao.findAllByDelFlag("0");
     }
 
     public void exceptionIO() {
@@ -200,8 +200,48 @@ public class BrushServiceImpl implements BrushService {
         return list;
     }
 
+    @Override
+    public void fenzu() {
+        List<String> list = touristInfoDao.getFenzu();
+        AtomicInteger i = new AtomicInteger();
+        list.forEach(s -> {
+            List<BrushTicketInfo> listfenzu = touristInfoDao.findAllByRemarks(s);
+            AtomicReference<String> fenzus = new AtomicReference<>("");
+            listfenzu.forEach(brushTicketInfo -> {
+                fenzus.updateAndGet(v -> v + brushTicketInfo.getId()+"|");
+            });
+            String groupName = ""+ i.getAndIncrement();
+        });
+    }
+
     /**
      * 获取余票信息
+     */
+    public String getTime(String goodId) {
+        ResponseEntity<String> responseEntity = restTemplate.getForEntity(YLXS_URL + goodId + "&play_date=", String.class);
+        JSONObject resultJson = JSONObject.parseObject(responseEntity.getBody());
+        if (!StringUtils.equalsIgnoreCase("true", resultJson.getString("success"))) {
+            logger.info("-----------获取余票结果失败");
+            return null;
+        }
+        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000013");
+        for (int i = 0; i < jsonArray.size(); i++) {
+            JSONObject jsonObject1 = (JSONObject) jsonArray.get(i);
+            String id = jsonObject1.getString("id");
+            String[] tt = jsonObject1.getString("text").split(":");
+            if (Integer.parseInt(tt[tt.length - 1]) > 6 && StringUtils.equalsIgnoreCase("false", jsonObject1.getString("disabled"))) {
+                logger.info("剩余票量----" + id + "--------" + Integer.parseInt(tt[tt.length - 1]));
+                return id;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 获取余票信息
+     *
+     * @param goodId
+     * @return
      */
     public Map<String, Integer> getDamoYlxsTimeList(String goodId) {
         ResponseEntity<String> responseEntity = restTemplate.getForEntity(YLXS_URL + goodId + "&play_date=", String.class);
@@ -217,7 +257,7 @@ public class BrushServiceImpl implements BrushService {
             String id = jsonObject1.getString("id");
             String[] tt = jsonObject1.getString("text").split(":");
             Integer number = Integer.parseInt(tt[tt.length - 1]);
-            if (number > 5 && StringUtils.equalsIgnoreCase("false", jsonObject1.getString("disabled"))) {
+            if (number > 6 && StringUtils.equalsIgnoreCase("false", jsonObject1.getString("disabled"))) {
                 map.put(id, number);
             }
         });
@@ -349,7 +389,12 @@ public class BrushServiceImpl implements BrushService {
         });
     }
 
-    //抓取ip
+    /**
+     * 抓取ip
+     *
+     * @param ipUrl
+     * @return
+     */
     public List<BrushTicketInfo> getIp(String ipUrl) {
         List<BrushTicketInfo> ipMap = Lists.newArrayList();
         try {
@@ -361,7 +406,7 @@ public class BrushServiceImpl implements BrushService {
                 brushTicketInfo.setHostName(ipArray[i].split(":")[0]);
                 brushTicketInfo.setPort(Integer.parseInt(ipArray[i].split(":")[1]));
                 ipMap.add(brushTicketInfo);
-                logger.info(ipArray[i].split(":")[0]+":"+ipArray[i].split(":")[1]);
+                logger.info(ipArray[i].split(":")[0] + ":" + ipArray[i].split(":")[1]);
             }
         } catch (IOException e) {
             e.printStackTrace();

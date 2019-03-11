@@ -1,5 +1,6 @@
 package com.tourist.module.brushticket.service;
 
+import com.tourist.module.brushticket.entity.BrushExceptionInfo;
 import com.tourist.module.brushticket.entity.SuccessOrderInfo;
 
 import java.math.BigDecimal;
@@ -34,6 +35,11 @@ public interface BrushService {
     String disposeExceptionIO(String ipUrl);
 
     /**
+     * IO 处理异常数据
+     */
+    List<BrushExceptionInfo> getExceptionList();
+
+    /**
      * 更改支付状态
      */
     String changeStatus(Integer id);
@@ -49,4 +55,8 @@ public interface BrushService {
     List<SuccessOrderInfo> getEwmList();
 
 
+    /**
+     * 分组
+     */
+    void fenzu();
 }

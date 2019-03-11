@@ -1,5 +1,6 @@
 package com.tourist.module.brushticket.dao;
 
+import com.tourist.module.brushticket.entity.BrushTicketInfo;
 import com.tourist.module.brushticket.entity.TouristInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,4 +15,8 @@ public interface TouristInfoDao extends JpaRepository<TouristInfo, Integer> {
     @Query(value = "select * from tourist_info GROUP BY remarks", nativeQuery = true)
     List<TouristInfo> getRemarks();
 
+    @Query(value = "SELECT remarks from tourist_info GROUP BY remarks",nativeQuery = true)
+    List<String> getFenzu();
+
+    List<BrushTicketInfo> findAllByRemarks(String remarks);
 }

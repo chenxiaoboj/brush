@@ -13,4 +13,6 @@ public interface ExceptionInfoDao extends JpaRepository<BrushExceptionInfo,Integ
 
     List<BrushExceptionInfo> findAllByCountAndDelFlag(Integer count,String delFlag);
 
+    List<BrushExceptionInfo> findAllByDelFlag(String delFlag);
+
 }
