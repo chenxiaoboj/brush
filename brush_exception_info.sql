@@ -1,16 +1,16 @@
 /*
 Navicat MySQL Data Transfer
 
-Source Server         : localhose
-Source Server Version : 50720
+Source Server         : 本地数据库
+Source Server Version : 80015
 Source Host           : localhost:3306
 Source Database       : brush
 
 Target Server Type    : MYSQL
-Target Server Version : 50720
+Target Server Version : 80015
 File Encoding         : 65001
 
-Date: 2019-03-11 20:37:49
+Date: 2019-03-11 23:43:20
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -64,6 +64,7 @@ CREATE TABLE `success_order_info` (
   `order_id_url` varchar(255) DEFAULT NULL,
   `status` varchar(25) DEFAULT NULL,
   `name` varchar(50) DEFAULT NULL,
+  `success_url` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -73,10 +74,10 @@ CREATE TABLE `success_order_info` (
 DROP TABLE IF EXISTS `tourist_info`;
 CREATE TABLE `tourist_info` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(50) CHARACTER SET utf8 DEFAULT NULL COMMENT '姓名',
-  `mobile` varchar(50) CHARACTER SET utf8 DEFAULT NULL COMMENT '电话',
-  `id_number` varchar(50) CHARACTER SET utf8 DEFAULT NULL COMMENT '身份证号',
-  `remarks` varchar(50) CHARACTER SET utf8 DEFAULT NULL COMMENT '备注',
-  `del_flag` varchar(1) CHARACTER SET utf8 DEFAULT NULL,
+  `name` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL COMMENT '姓名',
+  `mobile` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL COMMENT '电话',
+  `id_number` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL COMMENT '身份证号',
+  `remarks` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL COMMENT '备注',
+  `del_flag` varchar(1) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=138 DEFAULT CHARSET=latin1;
