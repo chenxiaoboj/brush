@@ -76,7 +76,7 @@ public class FirstTest {
                 return null;
             }
             String verify = JSONObject.parseObject(result).getString("verify");
-            String cookie = http1.getHeaders("Set-Cookie")[4].getValue() + "; " + http1.getHeaders("Set-Cookie")[0].getValue();
+            String cookie = http1.getHeaders("Set-Cookie")[1].getValue() + "; " + http1.getHeaders("Set-Cookie")[0].getValue();
             logger.info("test ------验证码-------：" + verify);
             logger.info("test ------cookie-------：" + cookie);
             logger.info("test 线程名称：" + Thread.currentThread().getName() + "-----" + brushTicketDto.getHostName());

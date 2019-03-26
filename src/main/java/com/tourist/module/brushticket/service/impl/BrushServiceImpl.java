@@ -4,15 +4,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.tourist.module.brushticket.dao.BrushTicketInfoDao;
-import com.tourist.module.brushticket.dao.ExceptionInfoDao;
-import com.tourist.module.brushticket.dao.SuccessOrderInfoDao;
-import com.tourist.module.brushticket.dao.TouristInfoDao;
+import com.tourist.module.brushticket.dao.*;
 import com.tourist.module.brushticket.dto.Paramet;
-import com.tourist.module.brushticket.entity.BrushExceptionInfo;
-import com.tourist.module.brushticket.entity.BrushTicketInfo;
-import com.tourist.module.brushticket.entity.SuccessOrderInfo;
-import com.tourist.module.brushticket.entity.TouristInfo;
+import com.tourist.module.brushticket.entity.*;
 import com.tourist.module.brushticket.service.BrushService;
 import com.tourist.module.brushticket.service.component.BrushComponent;
 import com.tourist.module.brushticket.service.component.FirstTest;
@@ -60,6 +54,8 @@ public class BrushServiceImpl implements BrushService {
     private SuccessOrderInfoDao successOrderInfoDao;
     @Resource
     private ExceptionInfoDao exceptionInfoDao;
+    @Resource
+    private FenzuEntityDao fenzuEntityDao;
 
 
     /**
@@ -69,10 +65,6 @@ public class BrushServiceImpl implements BrushService {
      */
     @Override
     public String brush(String goodId, Double coefficient, String ipUrl) {
-        if (coefficient > 1) {
-            brushComponent.getEwm();
-            return "success";
-        }
         String resultString = "";
         Map<String, Integer> map = this.getDamoYlxsTimeList(goodId);
         if (map == null) {
@@ -99,8 +91,10 @@ public class BrushServiceImpl implements BrushService {
         List<List<Paramet>> parameters = this.getParameterList(parameterList, map, touristInfoList.size(), number.get(), coefficient);
         //抓取ip地址
         List<BrushTicketInfo> brushTicketDtoList = this.getIp(ipUrl);
+        AtomicInteger fromIndex = new AtomicInteger();
         parameters.forEach(parametList -> {
-            this.sendRequest(parametList, brushTicketDtoList);
+            this.sendRequest(parametList, brushTicketDtoList.subList(fromIndex.get(), fromIndex.get() + parametList.size()));
+            fromIndex.addAndGet(parametList.size());
         });
         return resultString;
     }
@@ -146,6 +140,7 @@ public class BrushServiceImpl implements BrushService {
         exceptionInfoList.forEach(brushExceptionInfo -> {
             String time = this.getTime("1843845");
             if (StringUtils.isBlank(time)) {
+                logger.info("无票可抢！");
                 return;
             }
             List<NameValuePair> list = Lists.newArrayList();
@@ -159,15 +154,21 @@ public class BrushServiceImpl implements BrushService {
                 } catch (ArrayIndexOutOfBoundsException e) {
                     value = "";
                 }
+                if (StringUtils.equalsIgnoreCase("time_slot_damoylxs[]", para[0])) {
+                    value = time;
+//                    value = "100000128631|100000000013|10:30:00-10:59:59|5";
+                }
                 list.add(new BasicNameValuePair(para[0], value));
             }
             NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
-            logger.info("-处理IO异常数据-------------：" + list.toString());
+            logger.info("----处理IO异常数据-------------：" + list.toString());
             brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps,
                     brushExceptionInfo.getMobile(), brushExceptionInfo.getNumber(), "1843845", brushExceptionInfo.getName());
-            i.addAndGet(1);
+            i.getAndIncrement();
+            brushExceptionInfo.setDelFlag("1");
         });
-        return null;
+        exceptionInfoDao.save(exceptionInfoList);
+        return "success";
     }
 
     @Override
@@ -189,8 +190,15 @@ public class BrushServiceImpl implements BrushService {
     @Override
     public void testThread() {
         List<BrushTicketInfo> brushTicketDtoList = brushTicketInfoDao.findAllByDelFlag("1");
+        List<Integer> list = Lists.newArrayList();
+        for (int i = 0; i < 30; i++) {
+            list.add(i);
+        }
+        AtomicInteger j = new AtomicInteger();
         brushTicketDtoList.forEach(brushTicketInfo -> {
+            System.out.println(System.currentTimeMillis() + "-----" + j);
             brushComponent.test(brushTicketInfo);
+            j.getAndIncrement();
         });
     }
 
@@ -203,15 +211,33 @@ public class BrushServiceImpl implements BrushService {
     @Override
     public void fenzu() {
         List<String> list = touristInfoDao.getFenzu();
+        List<FenzuEntity> listFenzu = Lists.newArrayList();
         AtomicInteger i = new AtomicInteger();
         list.forEach(s -> {
-            List<BrushTicketInfo> listfenzu = touristInfoDao.findAllByRemarks(s);
+            FenzuEntity fenzuEntity = new FenzuEntity();
+            List<TouristInfo> listfenzu = touristInfoDao.findAllByRemarks(s);
             AtomicReference<String> fenzus = new AtomicReference<>("");
             listfenzu.forEach(brushTicketInfo -> {
-                fenzus.updateAndGet(v -> v + brushTicketInfo.getId()+"|");
+                fenzus.updateAndGet(v -> v + brushTicketInfo.getId() + "|");
             });
-            String groupName = ""+ i.getAndIncrement();
+            fenzuEntity.setGroupName(s);
+            fenzuEntity.setIdList(fenzus.get().substring(0, fenzus.get().length() - 1));
+            fenzuEntity.setCount(listfenzu.size());
+            listFenzu.add(fenzuEntity);
         });
+        fenzuEntityDao.save(listFenzu);
+    }
+
+    @Override
+    public void ips(String ipUrl) {
+        for (int i = 0; i < 1; i++) {
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            this.getIp(ipUrl);
+        }
     }
 
     /**
@@ -229,7 +255,7 @@ public class BrushServiceImpl implements BrushService {
             JSONObject jsonObject1 = (JSONObject) jsonArray.get(i);
             String id = jsonObject1.getString("id");
             String[] tt = jsonObject1.getString("text").split(":");
-            if (Integer.parseInt(tt[tt.length - 1]) > 6 && StringUtils.equalsIgnoreCase("false", jsonObject1.getString("disabled"))) {
+            if (Integer.parseInt(tt[tt.length - 1]) > 0 && StringUtils.equalsIgnoreCase("false", jsonObject1.getString("disabled"))) {
                 logger.info("剩余票量----" + id + "--------" + Integer.parseInt(tt[tt.length - 1]));
                 return id;
             }
@@ -250,7 +276,7 @@ public class BrushServiceImpl implements BrushService {
             logger.info("------------获取余票结果失败");
             return null;
         }
-        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000013");
+        JSONArray jsonArray = resultJson.getJSONObject("list").getJSONArray("_100000000014");
         Map<String, Integer> map = Maps.newHashMap();
         jsonArray.forEach(jsonObject -> {
             JSONObject jsonObject1 = (JSONObject) jsonObject;
@@ -379,13 +405,9 @@ public class BrushServiceImpl implements BrushService {
             //参数
             NameValuePair[] nvps = list.toArray(new NameValuePair[list.size()]);
             //@TODO 获取代理信息，每个线程分发一个代理ip
-            i.addAndGet(1);
+            System.out.println(System.currentTimeMillis() + "-----" + i.get());
             brushComponent.getEwmUrl(brushTicketDtoList.get(i.get()), nvps, paramet.getMobile(), paramet.getAmount(), "1843845", paramet.getName());
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            i.getAndIncrement();
         });
     }
 
@@ -397,20 +419,23 @@ public class BrushServiceImpl implements BrushService {
      */
     public List<BrushTicketInfo> getIp(String ipUrl) {
         List<BrushTicketInfo> ipMap = Lists.newArrayList();
+        Map<String, Integer> map = Maps.newHashMap();
         try {
             Document document = Jsoup.connect(ipUrl).get();
             String ips = document.body().text();
             String[] ipArray = ips.split(";");
             for (int i = 0; i < ipArray.length; i++) {
-                BrushTicketInfo brushTicketInfo = new BrushTicketInfo();
-                brushTicketInfo.setHostName(ipArray[i].split(":")[0]);
-                brushTicketInfo.setPort(Integer.parseInt(ipArray[i].split(":")[1]));
-                ipMap.add(brushTicketInfo);
-                logger.info(ipArray[i].split(":")[0] + ":" + ipArray[i].split(":")[1]);
+                map.put(ipArray[i].split(":")[0], Integer.parseInt(ipArray[i].split(":")[1]));
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+        map.forEach((key, value) -> {
+            BrushTicketInfo brushTicketInfo = new BrushTicketInfo();
+            brushTicketInfo.setHostName(key);
+            brushTicketInfo.setPort(value);
+            ipMap.add(brushTicketInfo);
+        });
         return ipMap;
     }
 

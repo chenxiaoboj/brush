@@ -81,5 +81,17 @@ public class TouristController {
         brushService.testThread();
         return null;
     }
+    @ApiOperation(value = "分组")
+    @GetMapping(value = "/fenzu")
+    public String fenzu() {
+        brushService.fenzu();
+        return null;
+    }
+    @ApiOperation(value = "测试ip")
+    @GetMapping(value = "/ips")
+    public String testThread(@RequestParam String ipUrl) {
+        brushService.ips(ipUrl);
+        return "success";
+    }
 
 }

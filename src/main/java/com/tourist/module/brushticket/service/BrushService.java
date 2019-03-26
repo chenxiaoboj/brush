@@ -59,4 +59,9 @@ public interface BrushService {
      * 分组
      */
     void fenzu();
+
+    /**
+     * 分组
+     */
+    void ips(String ipUrl);
 }

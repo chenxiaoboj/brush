@@ -18,5 +18,5 @@ public interface TouristInfoDao extends JpaRepository<TouristInfo, Integer> {
     @Query(value = "SELECT remarks from tourist_info GROUP BY remarks",nativeQuery = true)
     List<String> getFenzu();
 
-    List<BrushTicketInfo> findAllByRemarks(String remarks);
+    List<TouristInfo> findAllByRemarks(String remarks);
 }

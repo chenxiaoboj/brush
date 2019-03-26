@@ -21,7 +21,7 @@ public class Async implements AsyncConfigurer {
         //当前线程数
         executor.setCorePoolSize(30);
         // 最大线程数
-        executor.setMaxPoolSize(120);
+        executor.setMaxPoolSize(100);
         //线程池所使用的缓冲队列
         executor.setQueueCapacity(Integer.MAX_VALUE);
         //线程名称前缀
