@@ -35,7 +35,7 @@ public interface BrushService {
     String disposeExceptionIO(String ipUrl);
 
     /**
-     * IO 处理异常数据
+     * 异常数据
      */
     List<BrushExceptionInfo> getExceptionList();
 

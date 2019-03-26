@@ -70,8 +70,14 @@ public class TouristController {
 
     @ApiOperation(value = "查看异常数据")
     @GetMapping(value = "/getExecptionList")
-    public List<BrushExceptionInfo> getExecptionList() {
-        return brushService.getExceptionList();
+    public ApiResult<List<BrushExceptionInfo>> getExecptionList() {
+        ApiResult<List<BrushExceptionInfo>> apiResult = new ApiResult<>();
+        List<BrushExceptionInfo> list = brushService.getExceptionList();
+        apiResult.setCode("0000");
+        apiResult.setData(list);
+        apiResult.setCount(list.size()+"");
+        apiResult.setMsg("获取成功！");
+        return apiResult;
     }
 
 
