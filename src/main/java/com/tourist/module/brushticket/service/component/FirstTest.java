@@ -38,7 +38,7 @@ public class FirstTest {
     @Resource
     private ExceptionInfoDao exceptionInfoDao;
 
-    public String firstTest(BrushTicketInfo brushTicketDto, NameValuePair[] parameter, String goodId) {
+    public Boolean firstTest(BrushTicketInfo brushTicketDto, NameValuePair[] parameter, String goodId) {
         logger.info(brushTicketDto.getHostName());
         BrushExceptionInfo exceptionInfo = new BrushExceptionInfo();
         exceptionInfo.setParameter(Arrays.toString(parameter));
@@ -105,38 +105,39 @@ public class FirstTest {
             if (StringUtils.equalsIgnoreCase("false", orderJson.getString("success"))) {
                 String errorMessage = orderJson.getString("message");
                 logger.info(errorMessage);
-                return null;
+                return false;
             }
             String auth_orders_id = JSONObject.parseObject(orderResult).getJSONObject("data").getString("auth_orders_id");
             logger.info("------------------auth_orders_id-------------" + auth_orders_id);
             exceptionInfo.setAuthOrdersId(auth_orders_id);
             http2.close();
             httpclient.close();
+            return true;
         } catch (IOException e) {
             logger.info("test 其他异常信息" + e.getMessage());
             exceptionInfo.setMessage(e.getMessage());
             exceptionInfo.setCount(4);
             exceptionInfoDao.save(exceptionInfo);
-            return null;
+            return false;
         } catch (URISyntaxException e) {
             logger.info("test 其他异常信息" + e.getMessage());
             exceptionInfo.setMessage(e.getMessage());
             exceptionInfo.setCount(4);
             exceptionInfoDao.save(exceptionInfo);
-            return null;
+            return false;
         } catch (InterruptedException e) {
             logger.info("test 其他异常信息" + e.getMessage());
             exceptionInfo.setMessage(e.getMessage());
             exceptionInfo.setCount(4);
             exceptionInfoDao.save(exceptionInfo);
-            return null;
+            return false;
         } catch (Exception e) {
             logger.info("test 其他异常信息" + e.getMessage());
             exceptionInfo.setMessage(e.getMessage());
             exceptionInfo.setCount(4);
             exceptionInfoDao.save(exceptionInfo);
-            return null;
+            return false;
         }
-        return "true";
+
     }
 }
