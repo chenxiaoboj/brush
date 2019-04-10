@@ -14,9 +14,12 @@ spring:
 #      url: jdbc:mysql://localhost:3306/brush?characterEncoding=UTF-8&serverTimezone=UTC&useSSL=false&autoReconnect=true
 #      username: root
 #      password: chen
-      url: jdbc:mysql://hdm515540362.my3w.com:3306/hdm515540362_db?characterEncoding=UTF-8&serverTimezone=UTC&useSSL=false&autoReconnect=true
-      username: hdm515540362
-      password: imiuSOFT@100106
+#      url: jdbc:mysql://hdm515540362.my3w.com:3306/hdm515540362_db?characterEncoding=UTF-8&serverTimezone=UTC&useSSL=false&autoReconnect=true
+#      username: hdm515540362
+#      password: imiuSOFT@100106
+      url: jdbc:mysql://47.98.201.181:3306/brush?characterEncoding=UTF-8&serverTimezone=UTC&useSSL=false&autoReconnect=true
+      username: root
+      password: chen0221
 #打印sql日志
 logging:
   level:
