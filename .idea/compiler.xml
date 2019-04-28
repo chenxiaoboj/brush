@@ -7,7 +7,16 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="brush" />
+        <module name="lanjchenx-common-utils" />
+        <module name="lanjchenx-security-jwt-starter" />
+        <module name="mall-admin" />
       </profile>
     </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="lanjchenx-common-utils" options="-Xlint:deprecation" />
+      <module name="lanjchenx-security-jwt-starter" options="-Xlint:deprecation" />
+    </option>
   </component>
 </project>
