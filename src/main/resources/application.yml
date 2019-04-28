@@ -14,6 +14,10 @@ spring:
 #      url: jdbc:mysql://localhost:3306/brush?characterEncoding=UTF-8&serverTimezone=UTC&useSSL=false&autoReconnect=true
 #      username: root
 #      password: chen
+<<<<<<< HEAD
+=======
+
+>>>>>>> ff3cd1f61f2b82c88baa667a944a880297b833af
 #打印sql日志
 logging:
   level:

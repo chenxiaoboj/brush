@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author chenx 2019-02-22 16:34
  */
-@Api(value = "TouristController", tags = "")
+@Api(value = "TouristController", tags = "丽江刷票工具接口")
 @RestController
 @RequestMapping(value = "api/v1/tourist")
 public class TouristController {
@@ -59,7 +59,7 @@ public class TouristController {
     @ApiOperation(value = "测试是否可以刷票")
     @GetMapping(value = "/testIsOk")
     public String testIsOk(@RequestParam String ipUrl) {
-        return brushService.testOk(ipUrl);
+        return brushService.testOk(ipUrl)+"";
     }
 
     @ApiOperation(value = "更改支付状态")

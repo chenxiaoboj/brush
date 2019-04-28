@@ -21,7 +21,7 @@ public interface BrushService {
     /**
      * 测试是否可以刷票
      */
-    String testOk(String ipUrl);
+    Boolean testOk(String ipUrl);
 
     /**
      * 处理异常数据
