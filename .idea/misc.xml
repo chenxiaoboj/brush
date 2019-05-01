@@ -80,6 +80,10 @@
     <option name="originalFiles">
       <list>
         <option value="$PROJECT_DIR$/pom.xml" />
+        <option value="$PROJECT_DIR$/../mall-admin/pom.xml" />
+        <option value="$PROJECT_DIR$/../lanjchenx-security-jwt-starter/pom.xml" />
+        <option value="$PROJECT_DIR$/../lanjchenx-common-utils/pom.xml" />
+        <option value="$PROJECT_DIR$/../service-parent/pom.xml" />
       </list>
     </option>
   </component>

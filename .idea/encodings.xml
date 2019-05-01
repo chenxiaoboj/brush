@@ -2,5 +2,9 @@
 <project version="4">
   <component name="Encoding" addBOMForNewFiles="with NO BOM">
     <file url="file://$PROJECT_DIR$" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/../lanjchenx-common-utils" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/../lanjchenx-security-jwt-starter" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/../mall-admin" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/../service-parent" charset="UTF-8" />
   </component>
 </project>
