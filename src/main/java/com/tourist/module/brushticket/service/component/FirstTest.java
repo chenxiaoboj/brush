@@ -44,7 +44,9 @@ public class FirstTest {
         exceptionInfo.setParameter(Arrays.toString(parameter));
         exceptionInfo.setCreateTime(new Date());
         exceptionInfo.setDelFlag("test");
+
         try {
+
             //设置代理IP
             HttpHost proxy = new HttpHost(brushTicketDto.getHostName(), brushTicketDto.getPort(), "http");
             CloseableHttpClient httpclient = HttpClients
@@ -53,6 +55,15 @@ public class FirstTest {
                     .setProxy(proxy)
                     .setConnectionTimeToLive(1000 * 3, TimeUnit.MILLISECONDS)
                     .build();
+            String tnciStr="";
+
+            String[] tncichars = new String[]{"83b1ia4","2tlie12h9wf","2tlie12h9wf","2tlie12h9wf","2tlie12h9wf"};
+            tnciStr=tncichars[(int)((Math.random())*1)];
+            String[] chartStr = new String[]{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"};
+            for(int i=0;i<3;i++){
+                tnciStr+=chartStr[(int)((Math.random())*35)];
+            }
+            logger.info("------------------COOKIE.tnci-0------------" + tnciStr);
             CloseableHttpResponse http1 = httpclient.execute(RequestBuilder.post()
                     .setUri(new URI(V_URL))
                     .setHeader("Accept", "application/json, text/javascript, */*; q=0.01")
@@ -65,6 +76,7 @@ public class FirstTest {
                     .setHeader("Referer", "https://937707mltg.sjdzp.cn/Miniwx/Index/buy.html?goods_id=" + goodId + "&form=1&cc=1")
                     .setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36")
                     .setHeader("X-Requested-With", "XMLHttpRequest")
+                    .setHeader("Cookie", "tnci="+tnciStr+";")
                     .addParameter("verify_type", "1")
                     .build());
             String result = EntityUtils.toString(http1.getEntity());
@@ -105,7 +117,7 @@ public class FirstTest {
             if (StringUtils.equalsIgnoreCase("false", orderJson.getString("success"))) {
                 String errorMessage = orderJson.getString("message");
                 logger.info(errorMessage);
-                return false;
+                return true;
             }
             String auth_orders_id = JSONObject.parseObject(orderResult).getJSONObject("data").getString("auth_orders_id");
             logger.info("------------------auth_orders_id-------------" + auth_orders_id);

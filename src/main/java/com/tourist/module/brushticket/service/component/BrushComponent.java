@@ -70,6 +70,14 @@ public class BrushComponent {
                     .setProxy(proxy)
                     .setConnectionTimeToLive(1000 * 5, TimeUnit.MILLISECONDS)
                     .build();
+            String tnciStr="";
+            String[] tncichars = new String[]{"83b1ia4","sxnrmzsvb3","sxnrmzsvb3","sxnrmzsvb3","sxnrmzsvb3"};
+            tnciStr=tncichars[(int)((Math.random())*1)];
+            String[] chartStr = new String[]{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"};
+            for(int i=0;i<3;i++){
+                tnciStr+=chartStr[(int)((Math.random())*35)];
+            }
+            logger.info("------------------COOKIE.tnci-0------------" + tnciStr);
             CloseableHttpResponse http1 = httpclient.execute(RequestBuilder.post()
                     .setUri(new URI(V_URL))
                     .setHeader("Accept", "application/json, text/javascript, */*; q=0.01")
@@ -82,6 +90,7 @@ public class BrushComponent {
                     .setHeader("Referer", "https://937707mltg.sjdzp.cn/Miniwx/Index/buy.html?goods_id=" + goodId + "&form=1&cc=1")
                     .setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36")
                     .setHeader("X-Requested-With", "XMLHttpRequest")
+                    .setHeader("Cookie", "tnci="+tnciStr+";")
                     .addParameter("verify_type", "1")
                     .build());
             String result = EntityUtils.toString(http1.getEntity());
@@ -95,6 +104,7 @@ public class BrushComponent {
                 logger.info(errorMessage);
                 return null;
             }
+
             String verify = JSONObject.parseObject(result).getString("verify");
             String cookie = http1.getHeaders("Set-Cookie")[1].getValue() + "; " + http1.getHeaders("Set-Cookie")[0].getValue();
             logger.info("------验证码-------：" + verify);
