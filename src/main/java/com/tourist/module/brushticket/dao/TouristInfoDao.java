@@ -15,8 +15,12 @@ public interface TouristInfoDao extends JpaRepository<TouristInfo, Integer> {
     @Query(value = "select * from tourist_info GROUP BY remarks", nativeQuery = true)
     List<TouristInfo> getRemarks();
 
-    @Query(value = "SELECT remarks from tourist_info GROUP BY remarks",nativeQuery = true)
+    @Query(value = "SELECT remarks from tourist_info GROUP BY remarks", nativeQuery = true)
     List<String> getFenzu();
 
     List<TouristInfo> findAllByRemarks(String remarks);
+
+    TouristInfo findFirstByIdNumber(String idNumber);
+
+    List<TouristInfo> findAllByName(String name);
 }

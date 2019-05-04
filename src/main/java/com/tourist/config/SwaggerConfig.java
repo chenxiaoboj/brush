@@ -79,7 +79,7 @@ public class SwaggerConfig {
                 .title("Spring Boot中使用Swagger2构建RESTful APIs")
                 .description("陈晓波的Swagger")
                 .termsOfServiceUrl("192.168.100.44:8089")
-                .contact("sunf")
+//                .contact("sunf")
                 .version("1.0")
                 .build();
     }

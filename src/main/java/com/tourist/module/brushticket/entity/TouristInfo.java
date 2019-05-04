@@ -23,7 +23,7 @@ public class TouristInfo {
      */
     private String idNumber;
     /**
-     * 身份证号
+     * 手机号
      */
     private String mobile;
 
@@ -33,6 +33,18 @@ public class TouristInfo {
     private String remarks;
 
     private String delFlag;
+    /**
+     * 图片地址
+     */
+    private String imageUrl;
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 
     public String getDelFlag() {
         return delFlag;
