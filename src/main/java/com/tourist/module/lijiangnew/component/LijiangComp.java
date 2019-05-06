@@ -264,9 +264,8 @@ public class LijiangComp {
             String result = EntityUtils.toString(http1.getEntity());
             logger.info("创建订单返回数据:{}", result);
             JSONObject jsonObject = JSONObject.parseObject(result);
-            if (StringUtils.equalsIgnoreCase("200", jsonObject.getString("code")) &&
-                    StringUtils.equalsIgnoreCase("订单创建成功", jsonObject.getString("message"))) {
-                LijiangParameterInfo lijiangParameterInfo = lijiangParameterInfoDao.getOne(id);
+            if (StringUtils.equalsIgnoreCase("200", jsonObject.getString("code"))) {
+                LijiangParameterInfo lijiangParameterInfo = new LijiangParameterInfo();
                 lijiangParameterInfo.setDelFlag(1);
                 lijiangParameterInfoDao.save(lijiangParameterInfo);
                 logger.info("-------------提交订单成功----------修改状态");
