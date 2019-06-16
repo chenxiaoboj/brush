@@ -5,6 +5,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Cache;
 
 import javax.persistence.*;
+import java.util.Date;
 
 /**
  * @author admin 2019-05-01 21:27
@@ -18,12 +19,16 @@ public class LijiangParameterInfo {
     /**
      * 完整参数
      */
-    @Column(length = 2000)
+    @Column(length = 5000)
     private String parameters;
     /**
      * 用户名
      */
     private String username;
+    /**
+     * 用户名
+     */
+    private Date createTime;
     /**
      * 用户名
      */
@@ -39,12 +44,20 @@ public class LijiangParameterInfo {
     /**
      * token
      */
-    @Column(length = 500)
+    @Column(length = 800)
     private String token;
     /**
      * 标记(0：未抢票或抢票失败，1：下单成功)
      */
     private Integer delFlag;
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
 
     public Integer getDelFlag() {
         return delFlag;

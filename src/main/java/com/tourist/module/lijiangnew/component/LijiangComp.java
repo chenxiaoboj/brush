@@ -6,6 +6,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.lanjchenx.utils.ArithUtil;
+import com.lanjchenx.utils.MD5Utils;
+import com.tourist.module.brushticket.entity.BrushTicketInfo;
 import com.tourist.module.lijiangnew.dao.LijiangParameterInfoDao;
 import com.tourist.module.lijiangnew.dto.AccountNumberDto;
 import com.tourist.module.lijiangnew.dto.ContactsDto;
@@ -15,6 +17,7 @@ import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -31,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -119,6 +123,7 @@ public class LijiangComp {
             String fileName = file.getOriginalFilename();
             HttpPost httpPost = new HttpPost(UPLOAD_IMAGE_URL);
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+            String sign= MD5Utils.MD5(token).toLowerCase();
             builder.addBinaryBody("file", file.getInputStream(), ContentType.parse("image/jpg"), fileName);// 文件流
             builder.addTextBody("filename", fileName);// 类似浏览器表单提交，对应input的name和value
             builder.setBoundary(string);
@@ -126,6 +131,7 @@ public class LijiangComp {
             httpPost.setHeaders(headers.toArray(new Header[headers.size()]));
             httpPost.setHeader("Accept-Encoding", "gzip");
             httpPost.setHeader("token", token);
+            httpPost.setHeader("sign", sign);
             httpPost.setHeader("Content-Type", "multipart/form-data; boundary=" + string);
             httpPost.setEntity(entity);
             HttpResponse response = httpClient.execute(httpPost);// 执行提交
@@ -245,11 +251,15 @@ public class LijiangComp {
      * @return
      */
     @Async
-    public void saveOrder(String token, String parameter, Integer id) {
+    @Transactional
+    public void saveOrder(String token, String parameter, Integer id, BrushTicketInfo brushTicketInfo) {
+        logger.info("ip:{}",brushTicketInfo.getHostName()+":"+brushTicketInfo.getPort());
         try {
+            HttpHost proxy = new HttpHost(brushTicketInfo.getHostName(), brushTicketInfo.getPort(), "http");
             CloseableHttpClient httpclient = HttpClients
                     .custom()
                     .setDefaultCookieStore(new BasicCookieStore())
+                    .setProxy(proxy)
                     .setConnectionTimeToLive(1000 * 5, TimeUnit.MILLISECONDS)
                     .setDefaultHeaders(headers)
                     .build();
@@ -260,21 +270,24 @@ public class LijiangComp {
             s.setContentEncoding("UTF-8");
             s.setContentType("application/json");//发送json数据需要设置contentType
             post.setEntity(s);
-            CloseableHttpResponse http1 = httpclient.execute(post);
+//            CloseableHttpResponse http1 = httpclient.execute(post);
+            CloseableHttpResponse http1 = httpclient.execute(RequestBuilder.post()
+                    .setUri(SAVE_ORDER)
+                    .setHeader("token", token)
+                    .setEntity(s)
+                    .build());
             String result = EntityUtils.toString(http1.getEntity());
-            logger.info("创建订单返回数据:{}", result);
+            logger.info("创建订单返回数据:{}", result+brushTicketInfo.getHostName()+":"+brushTicketInfo.getPort());
             JSONObject jsonObject = JSONObject.parseObject(result);
-            if (StringUtils.equalsIgnoreCase("200", jsonObject.getString("code")) &&
-                    StringUtils.equalsIgnoreCase("订单创建成功", jsonObject.getString("message"))) {
-                LijiangParameterInfo lijiangParameterInfo = lijiangParameterInfoDao.getOne(id);
-                lijiangParameterInfo.setDelFlag(1);
-                lijiangParameterInfoDao.save(lijiangParameterInfo);
+            if (StringUtils.equalsIgnoreCase("200", jsonObject.getString("code"))) {
+                lijiangParameterInfoDao.updateStatus(id);
                 logger.info("-------------提交订单成功----------修改状态");
             }
             http1.close();
             httpclient.close();
         } catch (Exception e) {
             e.printStackTrace();
+            logger.info(e.getMessage());
             logger.info("提交订单异常");
         }
     }
@@ -285,6 +298,7 @@ public class LijiangComp {
      */
     public void deleteContacts(String token, String individualFrequentContactsId) {
         try {
+            Thread.sleep(1000*2);
             List<String> contactsList = Lists.newArrayList();
             CloseableHttpClient httpclient = HttpClients
                     .custom()
@@ -319,6 +333,7 @@ public class LijiangComp {
      */
     public void addContacts(String token, ContactsDto contactsDto) {
         try {
+            Thread.sleep(1000*2);
             List<String> contactsList = Lists.newArrayList();
             CloseableHttpClient httpclient = HttpClients
                     .custom()
@@ -363,7 +378,11 @@ public class LijiangComp {
                     .setDefaultHeaders(headers)
                     .build();
             logger.info("------------------获取时间段------------");
-            HttpEntity httpEntity = new StringEntity(JSONObject.toJSONString(new TimeDto("1", "XSSKKC", LocalDate.now() + "", "10000000000002")));
+            HttpEntity httpEntity = new StringEntity(JSONObject.toJSONString(
+                    new TimeDto("1", "XSSKKC",
+                            LocalDate.now() + "",
+//                            LocalDate.now().minusDays(1) + "",
+                            "10000000000002","APPGP")));
             CloseableHttpResponse http1 = httpclient.execute(RequestBuilder.post()
                     .setUri(GET_TIME)
                     .setEntity(httpEntity)

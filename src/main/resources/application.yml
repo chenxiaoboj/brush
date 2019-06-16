@@ -1,5 +1,6 @@
 server:
   port: 8089
+  max-http-header-size: 8999
 spring:
   datasource:
     url: jdbc:mysql://hdm515540362.my3w.com:3306/hdm515540362_db?characterEncoding=UTF-8&serverTimezone=UTC&useSSL=false&autoReconnect=true
@@ -20,3 +21,4 @@ logging:
     org:
       hibernate:
         SQL: DEBUG
+

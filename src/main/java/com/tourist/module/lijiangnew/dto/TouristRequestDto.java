@@ -14,6 +14,9 @@ import javax.validation.constraints.Pattern;
 @ApiModel(value = "上传游客信息请求参数")
 public class TouristRequestDto {
 
+
+    @ApiModelProperty(value = "id")
+    private Integer id;
     @ApiModelProperty(value = "姓名")
     @NotBlank(message = "姓名不能为空")
     private String name;
@@ -26,6 +29,14 @@ public class TouristRequestDto {
     @ApiModelProperty(value = "用户id")
     @NotNull(message = "用户id不能为空")
     private Integer userId;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
     public Integer getUserId() {
         return userId;

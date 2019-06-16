@@ -16,6 +16,7 @@ public class TimeDto {
     private String timeControlType;
     private String controlDate;
     private String scenicSpotsId;
+    private String orderNetType;
 
     public String getBusinessOrgId() {
         return businessOrgId;
@@ -49,10 +50,19 @@ public class TimeDto {
         this.scenicSpotsId = scenicSpotsId;
     }
 
-    public TimeDto(String businessOrgId, String timeControlType, String controlDate, String scenicSpotsId) {
+    public String getOrderNetType() {
+        return orderNetType;
+    }
+
+    public void setOrderNetType(String orderNetType) {
+        this.orderNetType = orderNetType;
+    }
+
+    public TimeDto(String businessOrgId, String timeControlType, String controlDate, String scenicSpotsId, String orderNetType) {
         this.businessOrgId = businessOrgId;
         this.timeControlType = timeControlType;
         this.controlDate = controlDate;
         this.scenicSpotsId = scenicSpotsId;
+        this.orderNetType = orderNetType;
     }
 }

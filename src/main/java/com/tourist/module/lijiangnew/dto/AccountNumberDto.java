@@ -6,6 +6,7 @@ package com.tourist.module.lijiangnew.dto;
 public class AccountNumberDto {
     private String userName;
     private String password;
+    private String validate;
 
     public String getUserName() {
         return userName;
@@ -23,8 +24,17 @@ public class AccountNumberDto {
         this.password = password;
     }
 
-    public AccountNumberDto(String userName, String password) {
+    public String getValidate() {
+        return validate;
+    }
+
+    public void setValidate(String password) {
+        this.validate = validate;
+    }
+
+    public AccountNumberDto(String userName, String password, String validate) {
         this.userName = userName;
         this.password = password;
+        this.validate = validate;
     }
 }

@@ -19,6 +19,15 @@ public class ContactsDto {
     private String photoUrl;
     private String certificateNo;
     private String frequentContactsName;
+    private String validate;
+
+    public String getValidate() {
+        return validate;
+    }
+
+    public void setValidate(String validate) {
+        this.validate = validate;
+    }
 
     public String getCertificateTypeId() {
         return certificateTypeId;
@@ -60,11 +69,12 @@ public class ContactsDto {
         this.frequentContactsName = frequentContactsName;
     }
 
-    public ContactsDto(String certificateTypeId, String frequentContactsPhone, String photoUrl, String certificateNo, String frequentContactsName) {
+    public ContactsDto(String certificateTypeId, String frequentContactsPhone, String photoUrl, String certificateNo, String frequentContactsName, String validate) {
         this.certificateTypeId = certificateTypeId;
         this.frequentContactsPhone = frequentContactsPhone;
         this.photoUrl = photoUrl;
         this.certificateNo = certificateNo;
         this.frequentContactsName = frequentContactsName;
+        this.validate = validate;
     }
 }

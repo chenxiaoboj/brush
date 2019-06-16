@@ -16,5 +16,7 @@ public interface LijiangTouristDao extends JpaRepository<LijiangTouristInfo, Int
 
     List<LijiangTouristInfo> findByDelFlag(Integer delFlag);
 
-    List<LijiangTouristInfo> findByUserId(Integer userId);
+    List<LijiangTouristInfo> findByUserIdAndDelFlag(Integer userId,Integer delFlag);
+
+
 }

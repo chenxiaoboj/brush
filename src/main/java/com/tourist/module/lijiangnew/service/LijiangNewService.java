@@ -16,16 +16,18 @@ import java.util.List;
  */
 public interface LijiangNewService {
 
+
+
     /**
      * 上传游客信息
      *
      * @param multipartFile
      * @return
      */
-    ApiReturn upLoadImages(MultipartFile multipartFile);
+    ApiReturn upLoadImages(MultipartFile multipartFile,String validate);
 
     /**
-     * 登录
+     * 登录（数据库验证码登录）
      *
      * @param lijiangAccountNumber
      * @return
@@ -33,9 +35,18 @@ public interface LijiangNewService {
     String login(LijiangAccountNumber lijiangAccountNumber);
 
     /**
+     * 登录(通过前端传递验证码登录)
+     *
+     * @param lijiangAccountNumber
+     * @param validate
+     * @return
+     */
+    String login(LijiangAccountNumber lijiangAccountNumber,String validate);
+
+    /**
      * 添加游客到本地数据库
      *
-     * @param touristRequestDto
+         * @param touristRequestDto
      * @return
      */
     ApiReturn upLoadTourist(TouristRequestDto touristRequestDto);
@@ -68,14 +79,14 @@ public interface LijiangNewService {
      *
      * @return
      */
-    ApiReturn brushToken();
+    ApiReturn brushToken(Integer count);
 
     /**
      * 启动刷票
      *
      * @return
      */
-    ApiReturn brush();
+    ApiReturn brush(String ipUrl);
 
     /**
      * 临时删除游客
@@ -99,6 +110,14 @@ public interface LijiangNewService {
      * @return
      */
     ApiResult<List<PeopleDto>> getOrderStatus();
+
+    /**
+     * 添加验证码
+     *
+     * @return
+     */
+    ApiReturn saveValidate(String validate,Long expirationTime);
+
 
 
 }
