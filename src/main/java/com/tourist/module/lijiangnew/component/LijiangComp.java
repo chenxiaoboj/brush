@@ -1,23 +1,19 @@
 package com.tourist.module.lijiangnew.component;
 
-import ch.qos.logback.core.encoder.EchoEncoder;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.lanjchenx.utils.ArithUtil;
 import com.lanjchenx.utils.MD5Utils;
-import com.tourist.module.brushticket.entity.BrushTicketInfo;
 import com.tourist.module.lijiangnew.dao.LijiangParameterInfoDao;
 import com.tourist.module.lijiangnew.dto.AccountNumberDto;
 import com.tourist.module.lijiangnew.dto.ContactsDto;
 import com.tourist.module.lijiangnew.dto.TimeDto;
 import com.tourist.module.lijiangnew.entity.LijiangParameterInfo;
-import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -58,6 +54,7 @@ public class LijiangComp {
 
     @Resource
     private LijiangParameterInfoDao lijiangParameterInfoDao;
+
 
     //登录地址
     private static final String LOGIN_URL = "https://mallwx.ltg.cn/loginAction/login";
@@ -252,14 +249,14 @@ public class LijiangComp {
      */
     @Async
     @Transactional
-    public void saveOrder(String token, String parameter, Integer id, BrushTicketInfo brushTicketInfo) {
-        logger.info("ip:{}",brushTicketInfo.getHostName()+":"+brushTicketInfo.getPort());
+    public void saveOrder(String token, String parameter, Integer id) {
+//        logger.info("ip:{}",brushTicketInfo.getHostName()+":"+brushTicketInfo.getPort());
         try {
-            HttpHost proxy = new HttpHost(brushTicketInfo.getHostName(), brushTicketInfo.getPort(), "http");
+//            HttpHost proxy = new HttpHost(brushTicketInfo.getHostName(), brushTicketInfo.getPort(), "http");
             CloseableHttpClient httpclient = HttpClients
                     .custom()
                     .setDefaultCookieStore(new BasicCookieStore())
-                    .setProxy(proxy)
+//                    .setProxy(proxy)
                     .setConnectionTimeToLive(1000 * 5, TimeUnit.MILLISECONDS)
                     .setDefaultHeaders(headers)
                     .build();
@@ -277,7 +274,7 @@ public class LijiangComp {
                     .setEntity(s)
                     .build());
             String result = EntityUtils.toString(http1.getEntity());
-            logger.info("创建订单返回数据:{}", result+brushTicketInfo.getHostName()+":"+brushTicketInfo.getPort());
+            logger.info("创建订单返回数据:{}", result);
             JSONObject jsonObject = JSONObject.parseObject(result);
             if (StringUtils.equalsIgnoreCase("200", jsonObject.getString("code"))) {
                 lijiangParameterInfoDao.updateStatus(id);

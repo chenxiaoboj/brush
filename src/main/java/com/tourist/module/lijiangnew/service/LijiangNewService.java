@@ -1,6 +1,5 @@
 package com.tourist.module.lijiangnew.service;
 
-import ch.qos.logback.core.rolling.helper.IntegerTokenConverter;
 import com.lanjchenx.dto.ApiResult;
 import com.lanjchenx.dto.ApiReturn;
 import com.tourist.module.lijiangnew.dto.PeopleDto;
@@ -86,7 +85,13 @@ public interface LijiangNewService {
      *
      * @return
      */
-    ApiReturn brush(String ipUrl);
+    ApiReturn brush();
+    /**
+     * 启动刷票
+     *
+     * @return
+     */
+    ApiReturn brushOrd();
 
     /**
      * 临时删除游客

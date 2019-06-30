@@ -8,8 +8,8 @@ import com.lanjchenx.constants.CommonConstants;
 import com.lanjchenx.dto.ApiResult;
 import com.lanjchenx.dto.ApiReturn;
 import com.lanjchenx.utils.IdCardUtil;
-import com.tourist.module.brushticket.entity.BrushTicketInfo;
 import com.tourist.module.lijiangnew.component.LijiangComp;
+import com.tourist.module.lijiangnew.component.ScheduledExecutor;
 import com.tourist.module.lijiangnew.dao.AccountNumberDao;
 import com.tourist.module.lijiangnew.dao.LijiangParameterInfoDao;
 import com.tourist.module.lijiangnew.dao.LijiangTouristDao;
@@ -23,8 +23,6 @@ import com.tourist.module.lijiangnew.service.LijiangNewService;
 import com.tourist.module.utils.RandomUtil;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -34,10 +32,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +57,8 @@ public class LijiangNewServiceImpl implements LijiangNewService {
     private LijiangComp lijiangComp;
     @Resource
     private LijiangValidateInfoDao lijiangValidateInfoDao;
+    @Resource
+    private ScheduledExecutor scheduledExecutor;
 
     @Override
     public ApiReturn upLoadImages(MultipartFile multipartFile, String validate) {
@@ -170,7 +168,6 @@ public class LijiangNewServiceImpl implements LijiangNewService {
     }
 
     @Override
-    @Transactional
     public ApiReturn groupAndAddContacts(Integer beginSize, Integer endSize) {
         try {
             //10个游客分一组
@@ -199,7 +196,7 @@ public class LijiangNewServiceImpl implements LijiangNewService {
                 listTourist.forEach(lijiangTouristInfo -> {
                     Parameter.OrderItemsList.OrderCertificateItemsList orderCertificateItemsList = new Parameter.OrderItemsList.OrderCertificateItemsList();
                     BeanUtils.copyProperties(lijiangTouristInfo, orderCertificateItemsList);
-                   lijiangComp.addContacts(token, new ContactsDto(
+                    lijiangComp.addContacts(token, new ContactsDto(
                             lijiangTouristInfo.getCertificateTypeId() + "",
                             lijiangTouristInfo.getPhoneNumber(),
                             lijiangTouristInfo.getFacePicPath(),
@@ -243,7 +240,6 @@ public class LijiangNewServiceImpl implements LijiangNewService {
                 touristInfo.setDelFlag(1);
             });
             lijiangTouristDao.save(touristInfoList);
-            lijiangValidateInfoDao.delete(validateInfos);
         } catch (Exception e) {
             e.printStackTrace();
             ApiReturn.failure("分配账号游客异常");
@@ -260,7 +256,7 @@ public class LijiangNewServiceImpl implements LijiangNewService {
             loginParameter = lijiangParameterInfoDao.getParameter();
         } else {
             //删联系人
-            loginParameter = lijiangParameterInfoDao.getParameter(BooleanConstants.TRUE.CODE,LocalDate.now().minusDays(1).toString());
+            loginParameter = lijiangParameterInfoDao.getParameter(BooleanConstants.TRUE.CODE, LocalDate.now().minusDays(1).toString());
         }
         List<LijiangValidateInfo> validateInfos = lijiangValidateInfoDao.findSize(LocalDateTime.now().toString(), loginParameter.size());
         if (loginParameter.size() > validateInfos.size()) {
@@ -270,28 +266,44 @@ public class LijiangNewServiceImpl implements LijiangNewService {
             String username = loginParameter.get(i);
             String token = lijiangComp.login(new AccountNumberDto(
                     username, "100106", validateInfos.get(i).getValidate()));
-            lijiangParameterInfoDao.refreshToken(token,username );
+            lijiangParameterInfoDao.refreshToken(token, username);
         }
         lijiangValidateInfoDao.delete(validateInfos);
         return ApiReturn.success("token刷新成功");
     }
 
     @Override
-    @Transactional
-    public ApiReturn brush(String ipUrl) {
+    public ApiReturn brush() {
         List<LijiangParameterInfo> parameterInfos = this.parameter();
-        List<BrushTicketInfo> brushTicketDtoList = this.getIp(ipUrl);
-        AtomicInteger i = new AtomicInteger();
-        parameterInfos.forEach(lijiangParameterInfo -> {
-            lijiangComp.saveOrder(lijiangParameterInfo.getToken(), lijiangParameterInfo.getParameters(), lijiangParameterInfo.getId(), brushTicketDtoList.get(i.get()));
-            i.getAndIncrement();
-//            try {
-//                Thread.sleep(1000);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-        });
-        return ApiReturn.success("任务完成！");
+        List<List<LijiangParameterInfo>> lists = Lists.partition(parameterInfos, 18);
+        for (List<LijiangParameterInfo> list : lists) {
+            list.forEach(lijiangParameterInfo -> {
+                lijiangComp.saveOrder(lijiangParameterInfo.getToken(), lijiangParameterInfo.getParameters(), lijiangParameterInfo.getId());
+            });
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        return ApiReturn.success("执行完成");
+    }
+
+    @Override
+    public ApiReturn brushOrd() {
+        List<LijiangParameterInfo> parameterInfos = this.parameter();
+        List<List<LijiangParameterInfo>> lists = Lists.partition(parameterInfos, 18);
+        for (List<LijiangParameterInfo> list : lists) {
+            list.forEach(lijiangParameterInfo -> {
+                lijiangComp.saveOrder(lijiangParameterInfo.getToken(), lijiangParameterInfo.getParameters(), lijiangParameterInfo.getId());
+            });
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        return ApiReturn.success("执行完成");
     }
 
     @Override
@@ -379,7 +391,7 @@ public class LijiangNewServiceImpl implements LijiangNewService {
      *
      * @return
      */
-    private List<LijiangParameterInfo> parameter() {
+    public List<LijiangParameterInfo> parameter() {
         List<LijiangParameterInfo> parameterInfos = lijiangParameterInfoDao.findByDelFlag(0);
         List<LijiangValidateInfo> validateInfos = lijiangValidateInfoDao.findSize(LocalDateTime.now().toString(), parameterInfos.size());
         AtomicInteger validateIndex = new AtomicInteger(0);
@@ -420,37 +432,36 @@ public class LijiangNewServiceImpl implements LijiangNewService {
                 i.getAndIncrement();
             }
         });
-        lijiangValidateInfoDao.delete(validateInfos);
         return newParameter;
     }
 
 
-    /**
-     * 抓取ip
-     *
-     * @param ipUrl
-     * @return
-     */
-    public List<BrushTicketInfo> getIp(String ipUrl) {
-        List<BrushTicketInfo> ipMap = Lists.newArrayList();
-        Map<String, Integer> map = Maps.newHashMap();
-        try {
-            Document document = Jsoup.connect(ipUrl).get();
-            String ips = document.body().text();
-            String[] ipArray = ips.split(";");
-            for (int i = 0; i < ipArray.length; i++) {
-                map.put(ipArray[i].split(":")[0], Integer.parseInt(ipArray[i].split(":")[1]));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        map.forEach((key, value) -> {
-            BrushTicketInfo brushTicketInfo = new BrushTicketInfo();
-            brushTicketInfo.setHostName(key);
-            brushTicketInfo.setPort(value);
-            ipMap.add(brushTicketInfo);
-        });
-        return ipMap;
-    }
+//    /**
+//     * 抓取ip
+//     *
+//     * @param ipUrl
+//     * @return
+//     */
+//    public List<BrushTicketInfo> getIp(String ipUrl) {
+//        List<BrushTicketInfo> ipMap = Lists.newArrayList();
+//        Map<String, Integer> map = Maps.newHashMap();
+//        try {
+//            Document document = Jsoup.connect(ipUrl).get();
+//            String ips = document.body().text();
+//            String[] ipArray = ips.split(";");
+//            for (int i = 0; i < ipArray.length; i++) {
+//                map.put(ipArray[i].split(":")[0], Integer.parseInt(ipArray[i].split(":")[1]));
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        map.forEach((key, value) -> {
+//            BrushTicketInfo brushTicketInfo = new BrushTicketInfo();
+//            brushTicketInfo.setHostName(key);
+//            brushTicketInfo.setPort(value);
+//            ipMap.add(brushTicketInfo);
+//        });
+//        return ipMap;
+//    }
 
 }

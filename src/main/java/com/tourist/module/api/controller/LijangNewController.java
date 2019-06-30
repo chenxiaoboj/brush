@@ -71,8 +71,8 @@ public class LijangNewController {
 
     @ApiOperation(value = "（第二步）开始刷票")
     @GetMapping(value = "/brush")
-    public ApiReturn brush(@RequestParam String ipUrl) {
-        return lijiangNewService.brush(ipUrl);
+    public ApiReturn brush() {
+        return lijiangNewService.brush();
     }
 
     @ApiOperation(value = "根据联系人手机号,身份证号，临时删除联系人")
