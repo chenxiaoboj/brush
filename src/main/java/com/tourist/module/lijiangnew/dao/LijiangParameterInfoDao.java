@@ -25,8 +25,8 @@ public interface LijiangParameterInfoDao extends JpaRepository<LijiangParameterI
      *
      * @return
      */
-    @Query(value = "select username from lijiang_parameter_info where del_flag=0  group by username", nativeQuery = true)
-    List<String> getParameter();
+    @Query(value = "select * from lijiang_parameter_info where del_flag=0  group by username", nativeQuery = true)
+    List<LijiangParameterInfo> getParameter();
 
     /**
      * 删除联系人刷新token
@@ -34,8 +34,8 @@ public interface LijiangParameterInfoDao extends JpaRepository<LijiangParameterI
      * @param delFlag
      * @return
      */
-    @Query(value = "select username from lijiang_parameter_info where del_flag=?1 and DATE_FORMAT(create_time,'%Y%m%d')=DATE_FORMAT(?2,'%Y%m%d')  group by username", nativeQuery = true)
-    List<String> getParameter(Byte delFlag, String time);
+    @Query(value = "select * from lijiang_parameter_info where del_flag=?1 and DATE_FORMAT(create_time,'%Y%m%d')=DATE_FORMAT(?2,'%Y%m%d')  group by username", nativeQuery = true)
+    List<LijiangParameterInfo> getParameter(Byte delFlag, String time);
 
     @Query(value = "select * from lijiang_parameter_info where del_flag=1 and DATE_FORMAT(create_time,'%Y%m%d')=DATE_FORMAT(?1,'%Y%m%d')  group by username", nativeQuery = true)
     List<LijiangParameterInfo> deletePerson(String date);

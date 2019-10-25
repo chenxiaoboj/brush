@@ -2,7 +2,6 @@ package com.tourist.module.lijiangnew.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.lanjchenx.constants.BooleanConstants;
 import com.lanjchenx.constants.CommonConstants;
 import com.lanjchenx.dto.ApiResult;
@@ -10,15 +9,9 @@ import com.lanjchenx.dto.ApiReturn;
 import com.lanjchenx.utils.IdCardUtil;
 import com.tourist.module.lijiangnew.component.LijiangComp;
 import com.tourist.module.lijiangnew.component.ScheduledExecutor;
-import com.tourist.module.lijiangnew.dao.AccountNumberDao;
-import com.tourist.module.lijiangnew.dao.LijiangParameterInfoDao;
-import com.tourist.module.lijiangnew.dao.LijiangTouristDao;
-import com.tourist.module.lijiangnew.dao.LijiangValidateInfoDao;
+import com.tourist.module.lijiangnew.dao.*;
 import com.tourist.module.lijiangnew.dto.*;
-import com.tourist.module.lijiangnew.entity.LijiangAccountNumber;
-import com.tourist.module.lijiangnew.entity.LijiangParameterInfo;
-import com.tourist.module.lijiangnew.entity.LijiangTouristInfo;
-import com.tourist.module.lijiangnew.entity.LijiangValidateInfo;
+import com.tourist.module.lijiangnew.entity.*;
 import com.tourist.module.lijiangnew.service.LijiangNewService;
 import com.tourist.module.utils.RandomUtil;
 import org.apache.commons.lang3.RandomUtils;
@@ -33,11 +26,11 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author admin 2019-05-01 15:37
@@ -58,22 +51,33 @@ public class LijiangNewServiceImpl implements LijiangNewService {
     @Resource
     private LijiangValidateInfoDao lijiangValidateInfoDao;
     @Resource
+    private LijiangTokenInfoDao lijiangTokenInfoDao;
+    @Resource
     private ScheduledExecutor scheduledExecutor;
 
     @Override
     public ApiReturn upLoadImages(MultipartFile multipartFile, String validate) {
         try {
-            List<LijiangAccountNumber> lijiangAccountNumberList = accountNumberDao.findByDelFlag(0);
-            String token = this.login(lijiangAccountNumberList.get(RandomUtils.nextInt(0, 193)), validate);
-
-            if (StringUtils.isBlank(token)) {
-                return ApiReturn.failure("登录异常！");
+//            List<LijiangAccountNumber> lijiangAccountNumberList = accountNumberDao.findByDelFlag(0);
+//            String token = this.login(lijiangAccountNumberList.get(RandomUtils.nextInt(0, 193)), validate);
+            List<LijiangTokenInfo> tokenInfoList = lijiangTokenInfoDao.findByDelFlag(0);
+            if (tokenInfoList.isEmpty()) {
+                return ApiReturn.failure("请先登录一批账号");
             }
+            LijiangTokenInfo lijiangTokenInfo = tokenInfoList.get(RandomUtils.nextInt(0, tokenInfoList.size() - 1));
+            String token = lijiangTokenInfo.getToken();
+//            if (StringUtils.isBlank(token)) {
+//                return ApiReturn.failure("登录异常！");
+//            }
             String imageUrl = lijiangComp.httpClientUploadFile(multipartFile, token);
-            if (StringUtils.isBlank(imageUrl)) {
-                return ApiReturn.failure("请上传本人自拍！！");
+            if (imageUrl.contains("https")) {
+                return ApiReturn.success(imageUrl);
+            } else if (StringUtils.equals("51005", imageUrl) || StringUtils.equals("51008", imageUrl)) {
+                lijiangTokenInfo.setDelFlag(1);
+                lijiangTokenInfoDao.save(lijiangTokenInfo);
+                return ApiReturn.failure("登录过期，请换其他账号！！");
             }
-            return ApiReturn.success(imageUrl);
+            return ApiReturn.failure("请上传本人自拍！！");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -179,7 +183,7 @@ public class LijiangNewServiceImpl implements LijiangNewService {
                 return ApiReturn.failure("验证码数量不够，请添加验证码");
             }
             AtomicInteger validateIndex = new AtomicInteger();
-            List<List<LijiangTouristInfo>> list10 = Lists.partition(touristInfoList, 10);
+            List<List<LijiangTouristInfo>> list10 = Lists.partition(touristInfoList, 5);
             if (list10.size() > accountNumberList.size()) {
                 logger.info("------------账号数量不够----------------");
                 return ApiReturn.failure("账号数量不够,重新获取");
@@ -219,8 +223,10 @@ public class LijiangNewServiceImpl implements LijiangNewService {
                     Parameter.OrderItemsList orderItemsList = new Parameter.OrderItemsList();
                     orderItemsList.setSaleSum(list5.size());
                     //产品id
-                    orderItemsList.setProductOnlyNo("10000008037");
+                    orderItemsList.setProductOnlyNo("10000008258");
                     orderItemsList.setOrderCertificateItemsList(list5);
+                    orderItemsList.setArriveDT(LocalDate.now().toString());
+                    orderItemsList.setProductType("ZHTC");
                     orderItemsLists.add(orderItemsList);
                     parameter.setOrderItemsList(orderItemsLists);
                     parameter.setOrderTimeControlList(null);
@@ -250,7 +256,7 @@ public class LijiangNewServiceImpl implements LijiangNewService {
     @Override
     @Transactional
     public ApiReturn brushToken(Integer count) {
-        List<String> loginParameter = null;
+        List<LijiangParameterInfo> loginParameter = null;
         if (count == 1) {
             //登录
             loginParameter = lijiangParameterInfoDao.getParameter();
@@ -263,9 +269,10 @@ public class LijiangNewServiceImpl implements LijiangNewService {
             return ApiReturn.failure("验证码数量不足！！");
         }
         for (int i = 0; i < loginParameter.size(); i++) {
-            String username = loginParameter.get(i);
+            String username = loginParameter.get(i).getUsername();
+            String password = loginParameter.get(i).getPassword();
             String token = lijiangComp.login(new AccountNumberDto(
-                    username, "100106", validateInfos.get(i).getValidate()));
+                    username, password, validateInfos.get(i).getValidate()));
             lijiangParameterInfoDao.refreshToken(token, username);
         }
         lijiangValidateInfoDao.delete(validateInfos);
@@ -275,16 +282,14 @@ public class LijiangNewServiceImpl implements LijiangNewService {
     @Override
     public ApiReturn brush() {
         List<LijiangParameterInfo> parameterInfos = this.parameter();
-        List<List<LijiangParameterInfo>> lists = Lists.partition(parameterInfos, 18);
+        if (parameterInfos==null){
+            return  ApiReturn.failure("今天票为0");
+        }
+        List<List<LijiangParameterInfo>> lists = Lists.partition(parameterInfos, 10);
         for (List<LijiangParameterInfo> list : lists) {
             list.forEach(lijiangParameterInfo -> {
                 lijiangComp.saveOrder(lijiangParameterInfo.getToken(), lijiangParameterInfo.getParameters(), lijiangParameterInfo.getId());
             });
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
         return ApiReturn.success("执行完成");
     }
@@ -292,13 +297,16 @@ public class LijiangNewServiceImpl implements LijiangNewService {
     @Override
     public ApiReturn brushOrd() {
         List<LijiangParameterInfo> parameterInfos = this.parameter();
-        List<List<LijiangParameterInfo>> lists = Lists.partition(parameterInfos, 18);
+        if (parameterInfos==null){
+            return  ApiReturn.failure("今天票为0");
+        }
+        List<List<LijiangParameterInfo>> lists = Lists.partition(parameterInfos, 10);
         for (List<LijiangParameterInfo> list : lists) {
             list.forEach(lijiangParameterInfo -> {
                 lijiangComp.saveOrder(lijiangParameterInfo.getToken(), lijiangParameterInfo.getParameters(), lijiangParameterInfo.getId());
             });
             try {
-                Thread.sleep(1000);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -396,12 +404,21 @@ public class LijiangNewServiceImpl implements LijiangNewService {
         List<LijiangValidateInfo> validateInfos = lijiangValidateInfoDao.findSize(LocalDateTime.now().toString(), parameterInfos.size());
         AtomicInteger validateIndex = new AtomicInteger(0);
         Map<String, Integer> timeMap = lijiangComp.getTimes();
-        Double coefficient = 1D;
+        AtomicReference<Integer> allCount = new AtomicReference<>(0);
+        timeMap.forEach((key, value) -> {
+            allCount.updateAndGet(v -> v + value);
+        });
+        if (allCount.get()==0){
+            logger.info("<<<<<<<<<<<<<<<<<<<<<<<今天的票量为0>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+            return null;
+        }
+        int count1 = parameterInfos.stream().mapToInt(LijiangParameterInfo::getCountNumber).sum();
+        Double coefficient = count1 / (allCount.get().doubleValue());
         AtomicInteger i = new AtomicInteger();
         List<LijiangParameterInfo> newParameter = Lists.newArrayList();
         timeMap.forEach((key, value) -> {
             //本时间段内分配任务量
-            int taskCount = (int) (value * coefficient);
+            int taskCount = (int) (value * coefficient + 1);
             Integer count = 0;
             while (true) {
                 if (i.get() >= parameterInfos.size()) {

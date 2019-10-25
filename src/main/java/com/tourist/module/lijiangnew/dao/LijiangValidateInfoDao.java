@@ -11,6 +11,6 @@ import java.util.List;
  */
 public interface LijiangValidateInfoDao extends JpaRepository<LijiangValidateInfo, Integer> {
 
-    @Query(value = "select * from lijiang_validate_info where value_date>?1 order by value_date limit 0,?2 ", nativeQuery = true)
+    @Query(value = "select * from lijiang_validate_info where value_date>?1 order by value_date DESC limit 0,?2 ", nativeQuery = true)
     List<LijiangValidateInfo> findSize(String time,Integer size);
 }

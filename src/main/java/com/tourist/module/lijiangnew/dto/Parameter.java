@@ -99,7 +99,26 @@ public class Parameter {
          */
 
         private String productOnlyNo;
+        private String arriveDT;
+        private String productType;
         private int saleSum;
+
+        public String getArriveDT() {
+            return arriveDT;
+        }
+
+        public void setArriveDT(String arriveDT) {
+            this.arriveDT = arriveDT;
+        }
+
+        public String getProductType() {
+            return productType;
+        }
+
+        public void setProductType(String productType) {
+            this.productType = productType;
+        }
+
         private List<OrderCertificateItemsList> orderCertificateItemsList;
 
         public String getProductOnlyNo() {
