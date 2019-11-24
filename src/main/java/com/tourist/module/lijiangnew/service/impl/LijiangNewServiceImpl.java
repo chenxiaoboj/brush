@@ -282,8 +282,8 @@ public class LijiangNewServiceImpl implements LijiangNewService {
     @Override
     public ApiReturn brush() {
         List<LijiangParameterInfo> parameterInfos = this.parameter();
-        if (parameterInfos==null){
-            return  ApiReturn.failure("今天票为0");
+        if (parameterInfos == null) {
+            return ApiReturn.failure("今天票为0");
         }
         List<List<LijiangParameterInfo>> lists = Lists.partition(parameterInfos, 10);
         for (List<LijiangParameterInfo> list : lists) {
@@ -297,8 +297,8 @@ public class LijiangNewServiceImpl implements LijiangNewService {
     @Override
     public ApiReturn brushOrd() {
         List<LijiangParameterInfo> parameterInfos = this.parameter();
-        if (parameterInfos==null){
-            return  ApiReturn.failure("今天票为0");
+        if (parameterInfos == null) {
+            return ApiReturn.failure("今天票为0");
         }
         List<List<LijiangParameterInfo>> lists = Lists.partition(parameterInfos, 10);
         for (List<LijiangParameterInfo> list : lists) {
@@ -402,13 +402,20 @@ public class LijiangNewServiceImpl implements LijiangNewService {
     public List<LijiangParameterInfo> parameter() {
         List<LijiangParameterInfo> parameterInfos = lijiangParameterInfoDao.findByDelFlag(0);
         List<LijiangValidateInfo> validateInfos = lijiangValidateInfoDao.findSize(LocalDateTime.now().toString(), parameterInfos.size());
+        if (validateInfos.size() < parameterInfos.size()) {
+            for (int i = 0; i < parameterInfos.size() - validateInfos.size(); i++) {
+                LijiangValidateInfo lijiang = new LijiangValidateInfo();
+                lijiang.setValidate("1111111111111");
+                validateInfos.add(lijiang);
+            }
+        }
         AtomicInteger validateIndex = new AtomicInteger(0);
         Map<String, Integer> timeMap = lijiangComp.getTimes();
         AtomicReference<Integer> allCount = new AtomicReference<>(0);
         timeMap.forEach((key, value) -> {
             allCount.updateAndGet(v -> v + value);
         });
-        if (allCount.get()==0){
+        if (allCount.get() == 0) {
             logger.info("<<<<<<<<<<<<<<<<<<<<<<<今天的票量为0>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
             return null;
         }

@@ -30,7 +30,7 @@ public class SchedulingTest {
     /**
      * 每天7点执行
      */
-    @Scheduled(cron = "1 0 7 * * ?")
+    @Scheduled(cron = "1 0 8 * * ?")
     @Async
     public void schedulerBrush() {
         logger.info("<<<<<<<<<<<<<---------------刷票任务启动---------------->>>>>>>>>>>>>>>>>>>");
