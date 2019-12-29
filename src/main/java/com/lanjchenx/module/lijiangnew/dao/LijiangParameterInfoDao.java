@@ -17,8 +17,8 @@ public interface LijiangParameterInfoDao extends CustomRepository<LijiangParamet
     List<LijiangParameterInfo> findByDelFlag(Integer delFlag);
 
     @Modifying
-    @Query(value = "update lijiang_parameter_info set del_flag= 1 where id= ?1", nativeQuery = true)
-    void updateStatus(Integer id);
+    @Query(value = "update lijiang_parameter_info set del_flag= 1,message = ?2 where id= ?1", nativeQuery = true)
+    void updateStatus(Integer id,String message);
 
     /**
      * 登录刷新token

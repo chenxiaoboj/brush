@@ -12,9 +12,9 @@ spring:
     #    url: jdbc:mysql://47.98.201.181:3306/lijiangserver?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&autoReconnect=true
     #    username: root
     #    password: chen0221155@2116
-    url: jdbc:mysql://47.98.201.181:3306/lijiangsever?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&autoReconnect=true
+    url: jdbc:mysql://47.111.23.19:3307/lijiang?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&autoReconnect=true
     username: root
-    password: chen0221
+    password: chen0221155@2116
 #    url: jdbc:mysql://localhost:3306/brush?characterEncoding=UTF-8&serverTimezone=UTC&useSSL=false&autoReconnect=true
 #    username: root
 #    password: imiusoft

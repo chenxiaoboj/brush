@@ -14,17 +14,21 @@ public interface LijiangTouristDao extends CustomRepository<LijiangTouristInfo, 
 
     LijiangTouristInfo findFirstByCertificateNo(String idNumber);
 
+    LijiangTouristInfo findFirstByIdAndDelFlagAndUserGroupAndParameter(Integer id, Integer delFlag, String userGroup, Integer parameter);
+
+    LijiangTouristInfo findFirstByUserGroupAndParameterAndAccountNumberIdIsNotNull(String userGroup, Integer parameter);
+
     List<LijiangTouristInfo> findAllByCertificateName(String name);
 
     List<LijiangTouristInfo> findByDelFlagOrderByUserGroup(Integer delFlag);
 
-    List<LijiangTouristInfo> findByDelFlagAndImgStatusAndParameter(Integer delFlag, Integer status, Integer parameter);
+    List<LijiangTouristInfo> findByDelFlagAndImgStatusAndParameterAndNewFlagAndUserGroupNotNull(Integer delFlag, Integer status, Integer parameter, Integer newFlag);
 
     List<LijiangTouristInfo> findByUserIdAndDelFlagOrderByUserGroup(Integer userId, Integer delFlag);
 
-    @Query(value = "update lijiang_tourist_info set user_group = ?1 where del_flag=0 and img_status=1 and id in ?2", nativeQuery = true)
+    @Query(value = "update lijiang_tourist_info set user_group = ?1,phone_number=?3 where del_flag=0 and img_status=0 and new_flag=1 and parameter=0 and id in ?2", nativeQuery = true)
     @Modifying
-    void updateUserGroup(String userGroup, List<Integer> ids);
+    void updateUserGroup(String userGroup, List<Integer> ids, String phone);
 
     @Query(value = "delete from lijiang_tourist_info where id in ?1", nativeQuery = true)
     @Modifying

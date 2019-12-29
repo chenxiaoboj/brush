@@ -28,6 +28,16 @@ public class TouristRequestDto {
     private Integer userId;
     @ApiModelProperty(value = "用户分组标识")
     private String userGroup;
+    @ApiModelProperty(value = "证件类型 0:身份证 1：护照")
+    private Integer type;
+
+    public Integer getType() {
+        return type;
+    }
+
+    public void setType(Integer type) {
+        this.type = type;
+    }
 
     public String getUserGroup() {
         return userGroup;

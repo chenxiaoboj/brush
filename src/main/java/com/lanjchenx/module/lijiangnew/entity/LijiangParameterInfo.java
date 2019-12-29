@@ -50,6 +50,18 @@ public class LijiangParameterInfo {
      * 标记(0：未抢票或抢票失败，1：下单成功)
      */
     private Integer delFlag;
+    /**
+     * 返回信息
+     */
+    private String message;
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
 
     public Date getCreateTime() {
         return createTime;

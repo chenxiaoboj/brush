@@ -21,4 +21,6 @@ public interface AccountNumberDao extends CustomRepository<LijiangAccountNumber,
 
     List<LijiangAccountNumber> findByDelFlagAndLoginStatusAndUseStatus(Integer delFlag, Integer loginStatus, Integer useStatus);
 
+    List<LijiangAccountNumber> findByDelFlagAndImgFlagAndLoginStatusAndUseStatus(Integer delFlag,Integer imgFlag, Integer loginStatus, Integer useStatus);
+
 }

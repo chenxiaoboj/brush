@@ -146,7 +146,7 @@ public class LijiangComp {
                     imageUrl = jsonObject.getJSONObject("data").getJSONArray("initialPreview").get(0).toString();
                     logger.info("返回图片地址:{}", imageUrl);
                 } else {
-                    imageUrl = jsonObject.getString("code");
+                    imageUrl = jsonObject.getString("message");
                 }
             }
         } catch (IOException e) {
@@ -283,8 +283,9 @@ public class LijiangComp {
             logger.info("创建订单返回数据:{}", result);
             JSONObject jsonObject = JSONObject.parseObject(result);
 //            this.findCreateOrder(token,parameter,id,15);
+            String message = jsonObject.getString("message");
             if (StringUtils.equalsIgnoreCase("200", jsonObject.getString("code"))) {
-                lijiangParameterInfoDao.updateStatus(id);
+                lijiangParameterInfoDao.updateStatus(id,message);
                 logger.info("-------------提交订单成功----------修改状态");
             }
             http1.close();
@@ -335,7 +336,7 @@ public class LijiangComp {
     /**
      * 添加联系人（需要token）
      */
-    public void addContacts(String token, ContactsDto contactsDto) {
+    public String addContacts(String token, ContactsDto contactsDto) {
         try {
             Thread.sleep(1000 * 2);
             List<String> contactsList = Lists.newArrayList();
@@ -356,14 +357,18 @@ public class LijiangComp {
             String result = EntityUtils.toString(http1.getEntity());
             logger.info("保存常用联系人返回信息:{}", result);
             JSONObject jsonObject = JSONObject.parseObject(result);
+            http1.close();
+            httpclient.close();
             if (StringUtils.equalsIgnoreCase("200", jsonObject.getString("code")) &&
                     StringUtils.equalsIgnoreCase("保存常用联系人成功", jsonObject.getString("message"))) {
                 logger.info("-------------保存常用联系人成功----------", contactsList);
+                return "200";
+            } else {
+                return jsonObject.getString("message");
             }
-            http1.close();
-            httpclient.close();
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
     }
 
@@ -416,60 +421,55 @@ public class LijiangComp {
         }
     }
 
-    /**
-     * 排队中检索订单 （需要token）
-     *
-     * @param token
-     * @param parameter
-     * @return
-     */
-    @Async
-    @Transactional
-    public void findCreateOrder(String token, String parameter, Integer id,int findCreateIndex) {
-        JSONObject jsonParameter = JSONObject.parseObject(parameter);
-        String uuid=jsonParameter.getString("createOrderUuid");
-        logger.info("重新下单请求所需UUID:"+uuid);
-        //发送get
-        try {
-            CloseableHttpClient httpclient = HttpClients
-                    .custom()
-                    .setDefaultCookieStore(new BasicCookieStore())
-                    .setConnectionTimeToLive(1000 * 5, TimeUnit.MILLISECONDS)
-                    .setDefaultHeaders(headers)
-                    .build();
-            logger.info("------------------查询---------------【"+findCreateIndex+"】");
-            CloseableHttpResponse http1 = httpclient.execute(RequestBuilder.get()
-                    .setUri(FIND_CREATE_ORDER+"?createOrderUuid="+uuid)
-                    .setHeader("token", token)
-                    .build());
-            String result = EntityUtils.toString(http1.getEntity());
-            logger.info("查询下单状态返回:{}", result);
-            JSONObject jsonObject = JSONObject.parseObject(result);
-            if (StringUtils.equalsIgnoreCase("200", jsonObject.getString("code"))) {
-                lijiangParameterInfoDao.updateStatus(id);
-                logger.info("-------------查询下单状态----订单成功----------修改状态");
-            }else if (StringUtils.equalsIgnoreCase("500", jsonObject.getString("code"))) {
-                //lijiangParameterInfoDao.updateStatus(id);
-                logger.info("-------------未出票成功----------再次检测:【"+findCreateIndex+"】");
-                Thread.sleep(1000*1);
-                findCreateIndex--;
-                if(findCreateIndex>0){
-                    findCreateOrder(token,parameter,id,findCreateIndex);
-                }
-            }
-            http1.close();
-            httpclient.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            logger.info(e.getMessage());
-            logger.info("提交订单异常");
-        }
-
-
-
-        //String uuid=thisParameter.
-
-    }
+//    /**
+//     * 排队中检索订单 （需要token）
+//     *
+//     * @param token
+//     * @param parameter
+//     * @return
+//     */
+//    @Async
+//    @Transactional
+//    public void findCreateOrder(String token, String parameter, Integer id, int findCreateIndex) {
+//        JSONObject jsonParameter = JSONObject.parseObject(parameter);
+//        String uuid = jsonParameter.getString("createOrderUuid");
+//        logger.info("重新下单请求所需UUID:" + uuid);
+//        //发送get
+//        try {
+//            CloseableHttpClient httpclient = HttpClients
+//                    .custom()
+//                    .setDefaultCookieStore(new BasicCookieStore())
+//                    .setConnectionTimeToLive(1000 * 5, TimeUnit.MILLISECONDS)
+//                    .setDefaultHeaders(headers)
+//                    .build();
+//            logger.info("------------------查询---------------【" + findCreateIndex + "】");
+//            CloseableHttpResponse http1 = httpclient.execute(RequestBuilder.get()
+//                    .setUri(FIND_CREATE_ORDER + "?createOrderUuid=" + uuid)
+//                    .setHeader("token", token)
+//                    .build());
+//            String result = EntityUtils.toString(http1.getEntity());
+//            logger.info("查询下单状态返回:{}", result);
+//            JSONObject jsonObject = JSONObject.parseObject(result);
+//            if (StringUtils.equalsIgnoreCase("200", jsonObject.getString("code"))) {
+//                lijiangParameterInfoDao.updateStatus(id);
+//                logger.info("-------------查询下单状态----订单成功----------修改状态");
+//            } else if (StringUtils.equalsIgnoreCase("500", jsonObject.getString("code"))) {
+//                //lijiangParameterInfoDao.updateStatus(id);
+//                logger.info("-------------未出票成功----------再次检测:【" + findCreateIndex + "】");
+//                Thread.sleep(1000 * 1);
+//                findCreateIndex--;
+//                if (findCreateIndex > 0) {
+//                    findCreateOrder(token, parameter, id, findCreateIndex);
+//                }
+//            }
+//            http1.close();
+//            httpclient.close();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            logger.info(e.getMessage());
+//            logger.info("提交订单异常");
+//        }
+//    }
 
     /**
      * 返回系数

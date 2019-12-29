@@ -40,6 +40,10 @@ public class LijiangTouristInfo {
      */
     private String phoneNumber;
     /**
+     * 返回信息
+     */
+    private String message;
+    /**
      * 图片地址
      */
     private String facePicPath;
@@ -73,6 +77,14 @@ public class LijiangTouristInfo {
     private Integer newFlag;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date cdate;
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
 
     public Integer getNewFlag() {
         return newFlag;

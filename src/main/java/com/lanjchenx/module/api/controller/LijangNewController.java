@@ -2,6 +2,7 @@ package com.lanjchenx.module.api.controller;
 
 import com.lanjchenx.dto.ApiResult;
 import com.lanjchenx.dto.ApiReturn;
+import com.lanjchenx.module.lijiangnew.dto.ParameterDto;
 import com.lanjchenx.module.lijiangnew.dto.PeopleDto;
 import com.lanjchenx.module.lijiangnew.entity.LijiangTouristInfo;
 import com.lanjchenx.module.lijiangnew.service.LijiangNewService;
@@ -96,6 +97,12 @@ public class LijangNewController {
     @GetMapping(value = "/getUserGroup")
     public ApiResult<List<String>> getUserGroup() {
         return lijiangNewService.getUserGroup();
+    }
+
+    @ApiOperation(value = "获取参数列表")
+    @GetMapping(value = "/getParameter")
+    public  ApiResult<List<ParameterDto>> getParameter(@RequestParam Integer delFlag) {
+        return lijiangNewService.getParameter(delFlag);
     }
 
 //    @ApiOperation(value = "test")

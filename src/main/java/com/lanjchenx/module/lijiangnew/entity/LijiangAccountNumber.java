@@ -24,6 +24,16 @@ public class LijiangAccountNumber {
     private Integer loginStatus;
     //使用状态 0：未使用 1：已使用
     private Integer useStatus;
+    //上传照片使用的账号标记
+    private Integer imgFlag;
+
+    public Integer getImgFlag() {
+        return imgFlag;
+    }
+
+    public void setImgFlag(Integer imgFlag) {
+        this.imgFlag = imgFlag;
+    }
 
     public Integer getUseStatus() {
         return useStatus;

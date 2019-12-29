@@ -5,7 +5,6 @@ import com.lanjchenx.dto.ApiReturn;
 import com.lanjchenx.module.lijiangnew.dto.LijiangTouristDto;
 import com.lanjchenx.module.lijiangnew.dto.StatusDto;
 import com.lanjchenx.module.lijiangnew.dto.TouristRequestDto;
-import com.lanjchenx.module.lijiangnew.entity.LijiangTouristInfo;
 import com.lanjchenx.module.lijiangnew.service.LijiangNewService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -31,6 +30,11 @@ public class TouristController {
     public ApiReturn uploadImage(@RequestParam MultipartFile file, @RequestParam String validate) {
         return lijiangNewService.upLoadImages(file, validate);
     }
+    @ApiOperation(value = "处理上传失败的联系人接口（同一人不能上传多张照片）")
+    @PostMapping(value = "/uploadImageTwo")
+    public ApiReturn uploadImageTwo(@RequestParam MultipartFile file, @RequestParam String userGroup, @RequestParam Integer id) {
+        return lijiangNewService.upLoadImages2(file, userGroup,id);
+    }
 
     @ApiOperation(value = "第二次上传游客图片，为游客分配账号")
     @GetMapping(value = "/updateImage")
@@ -40,7 +44,7 @@ public class TouristController {
 
     @ApiOperation(value = "上传游客信息")
     @PostMapping(value = "/uploadTourist")
-    public ApiReturn getTourist(@Valid @RequestBody TouristRequestDto touristRequestDto) {
+    public ApiReturn getTourist(@Valid TouristRequestDto touristRequestDto) {
         return lijiangNewService.upLoadTourist(touristRequestDto);
     }
 
@@ -51,11 +55,11 @@ public class TouristController {
     }
     @ApiOperation(value = "为游客分组")
     @GetMapping(value = "/userGroup")
-    public ApiReturn userGroup(@RequestParam List<Integer> ids) {
+    public ApiReturn userGroup(@RequestParam List<Integer> ids,@RequestParam String phone) {
         if (ids.size() > 5) {
             return ApiReturn.failure("分组人数过多，请重新选择");
         }
-        return lijiangNewService.userGroup(ids);
+        return lijiangNewService.userGroup(ids,phone);
     }
     @ApiOperation(value = "删除联系人")
     @GetMapping(value = "/deleteUser")

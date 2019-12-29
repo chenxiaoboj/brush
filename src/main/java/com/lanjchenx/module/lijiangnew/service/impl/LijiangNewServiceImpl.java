@@ -7,14 +7,14 @@ import com.lanjchenx.constants.BooleanConstants;
 import com.lanjchenx.constants.CommonConstants;
 import com.lanjchenx.dto.ApiResult;
 import com.lanjchenx.dto.ApiReturn;
-import com.lanjchenx.utils.IdCardUtil;
-import com.lanjchenx.utils.IdGen;
 import com.lanjchenx.module.lijiangnew.component.LijiangComp;
 import com.lanjchenx.module.lijiangnew.dao.*;
 import com.lanjchenx.module.lijiangnew.dto.*;
 import com.lanjchenx.module.lijiangnew.entity.*;
 import com.lanjchenx.module.lijiangnew.service.LijiangNewService;
 import com.lanjchenx.module.utils.RandomUtil;
+import com.lanjchenx.utils.IdCardUtil;
+import com.lanjchenx.utils.IdGen;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -32,7 +32,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -64,35 +67,56 @@ public class LijiangNewServiceImpl implements LijiangNewService {
     @Override
     public ApiReturn upLoadImages(MultipartFile multipartFile, String validate) {
         try {
-//            List<LijiangAccountNumber> lijiangAccountNumberList = accountNumberDao.findByDelFlag(0);
-//            String token = this.login(lijiangAccountNumberList.get(RandomUtils.nextInt(0, 193)), validate);
-            List<LijiangTokenInfo> tokenInfoList = lijiangTokenInfoDao.findByDelFlag(0);
-            if (tokenInfoList.isEmpty()) {
+            List<LijiangAccountNumber> list = accountNumberDao.findByDelFlagAndImgFlagAndLoginStatusAndUseStatus(1, 1, 1, 1);
+            if (list.isEmpty()) {
                 return ApiReturn.failure("请先登录一批账号");
             }
-            LijiangTokenInfo lijiangTokenInfo = tokenInfoList.get(RandomUtils.nextInt(0, tokenInfoList.size() - 1));
+            LijiangAccountNumber lijiangTokenInfo = list.get(RandomUtils.nextInt(0, list.size() - 1));
             String token = lijiangTokenInfo.getToken();
-//            if (StringUtils.isBlank(token)) {
-//                return ApiReturn.failure("登录异常！");
-//            }
             String imageUrl = lijiangComp.httpClientUploadFile(multipartFile, token);
             if (imageUrl.contains("https")) {
                 return ApiReturn.success(imageUrl);
-            } else if (StringUtils.equals("51005", imageUrl) || StringUtils.equals("51008", imageUrl)) {
-                lijiangTokenInfo.setDelFlag(1);
-                lijiangTokenInfoDao.save(lijiangTokenInfo);
-                return ApiReturn.failure("登录过期，请换其他账号！！");
+            } else {
+                return ApiReturn.failure(imageUrl);
             }
-            return ApiReturn.failure("请上传本人自拍！！");
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return ApiReturn.failure("上传图片失败！");
+        return ApiReturn.failure("系统异常！");
+    }
+
+    @Override
+    public ApiReturn upLoadImages2(MultipartFile multipartFile, String userGroup, Integer id) {
+        LijiangTouristInfo lijiangTouristInfoDemo = lijiangTouristDao.findFirstByUserGroupAndParameterAndAccountNumberIdIsNotNull(userGroup, 0);
+        if (lijiangTouristInfoDemo == null) {
+            //未分组
+            return ApiReturn.failure("请先更新照片再操作");
+        }
+        LijiangTouristInfo lijiangTouristInfo = lijiangTouristDao.findFirstByIdAndDelFlagAndUserGroupAndParameter(id, 0, userGroup, 0);
+        if (lijiangTouristInfo == null) {
+            return ApiReturn.failure("游客不存在，请检查用户id或分组标识是否正确");
+        }
+        LijiangAccountNumber lijiangAccountNumber = accountNumberDao.findOne(lijiangTouristInfoDemo.getAccountNumberId());
+        try {
+            String imageUrl = lijiangComp.httpClientUploadFile(multipartFile, lijiangAccountNumber.getToken());
+            if (imageUrl.contains("https")) {
+                lijiangTouristInfo.setAccountNumberId(lijiangTouristInfoDemo.getAccountNumberId());
+                lijiangTouristInfo.setFacePicPath(imageUrl);
+                lijiangTouristInfo.setImgStatus(1);
+                lijiangTouristDao.save(lijiangTouristInfo);
+                return ApiReturn.success("保存成功");
+            } else {
+                return ApiReturn.failure(imageUrl);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ApiReturn.failure("系统异常");
     }
 
     @Override
     public ApiReturn updateImages() {
-        List<LijiangTouristInfo> lijiangTouristInfos = lijiangTouristDao.findByDelFlagOrderByUserGroup(0);
+        List<LijiangTouristInfo> lijiangTouristInfos = lijiangTouristDao.findByDelFlagAndImgStatusAndParameterAndNewFlagAndUserGroupNotNull(0, 0, 0, 1);
         Map<Object, List<LijiangTouristInfo>> map = lijiangTouristInfos.stream().collect(Collectors.groupingBy(LijiangTouristInfo::getUserGroup));
         List<LijiangAccountNumber> lijiangAccountNumbers = accountNumberDao.findSize(map.size());
         if (lijiangAccountNumbers.size() < map.size()) {
@@ -110,16 +134,20 @@ public class LijiangNewServiceImpl implements LijiangNewService {
                     URL url1 = new URL(url);
                     URLConnection uc = url1.openConnection();
                     InputStream inputStream = uc.getInputStream();
-                    MultipartFile multipartFile = new MockMultipartFile(IdGen.randomString(6), inputStream);
-                    inputStream.close();
+                    MultipartFile multipartFile = new MockMultipartFile("temp.jpg", "temp.jpg", "image/jpg", inputStream);
+                    Thread.sleep(1000);
                     String imageUrl = lijiangComp.httpClientUploadFile(multipartFile, token);
                     if (imageUrl.contains("https")) {
                         lijiangTouristInfo.setFacePicPath(imageUrl);
                         lijiangTouristInfo.setImgStatus(1);
                         lijiangTouristInfo.setAccountNumberId(accountId);
-                        lijiangTouristDao.save(lijiangTouristInfo);
+                        lijiangTouristInfo.setMessage("上传成功");
+                    } else {
+                        lijiangTouristInfo.setMessage(imageUrl);
                     }
-                } catch (IOException e) {
+                    lijiangTouristDao.save(lijiangTouristInfo);
+                    inputStream.close();
+                } catch (IOException | InterruptedException e) {
                     e.printStackTrace();
                 }
             });
@@ -171,18 +199,27 @@ public class LijiangNewServiceImpl implements LijiangNewService {
 
     @Override
     public ApiReturn upLoadTourist(TouristRequestDto touristRequestDto) {
-        if (!StringUtils.equalsIgnoreCase("YES", IdCardUtil.IDCardValidate(touristRequestDto.getIdNumber()))) {
-            return ApiReturn.failure("身份证信息有误！！");
+        int typeId;
+        String vertificateCardName;
+        if (touristRequestDto.getType() == 0) {
+            if (!StringUtils.equalsIgnoreCase("YES", IdCardUtil.IDCardValidate(touristRequestDto.getIdNumber()))) {
+                return ApiReturn.failure("身份证信息有误！！");
+            }
+            typeId = 1;
+            vertificateCardName = "身份证";
+        } else {
+            vertificateCardName = "护照";
+            typeId = 5;
         }
-        if (touristRequestDto.getUserGroup().length() != 5) {
+        if (StringUtils.isNotBlank(touristRequestDto.getUserGroup()) && touristRequestDto.getUserGroup().length() != 5) {
             return ApiReturn.failure("分组编号有误");
         }
         if (touristRequestDto.getId() != null) {
             LijiangTouristInfo lijiangTourist = lijiangTouristDao.getOne(touristRequestDto.getId());
             lijiangTourist.setCertificateNo(touristRequestDto.getIdNumber());
-            lijiangTourist.setCertificateCardName("身份证");
+            lijiangTourist.setCertificateCardName(vertificateCardName);
             lijiangTourist.setCertificateName(touristRequestDto.getName());
-            lijiangTourist.setCertificateTypeId(1);
+            lijiangTourist.setCertificateTypeId(typeId);
             lijiangTourist.setFacePicPath(touristRequestDto.getImageUrl());
             lijiangTourist.setUserId(touristRequestDto.getUserId());
             lijiangTourist.setDelFlag(0);
@@ -199,9 +236,9 @@ public class LijiangNewServiceImpl implements LijiangNewService {
         }
         LijiangTouristInfo lijiangTourist = new LijiangTouristInfo();
         lijiangTourist.setCertificateNo(touristRequestDto.getIdNumber());
-        lijiangTourist.setCertificateCardName("身份证");
+        lijiangTourist.setCertificateCardName(vertificateCardName);
         lijiangTourist.setCertificateName(touristRequestDto.getName());
-        lijiangTourist.setCertificateTypeId(1);
+        lijiangTourist.setCertificateTypeId(typeId);
         lijiangTourist.setFacePicPath(touristRequestDto.getImageUrl());
         lijiangTourist.setUserId(touristRequestDto.getUserId());
         lijiangTourist.setDelFlag(0);
@@ -232,13 +269,14 @@ public class LijiangNewServiceImpl implements LijiangNewService {
                 predicates.add(cb.equal(root.get("userId").as(Integer.class), statusDto.getUserId()));
             }
             if (statusDto.getGroupStatus() == null) {
+
             } else if (statusDto.getGroupStatus() == 1) {
                 predicates.add(cb.isNotNull(root.get("userGroup").as(String.class)));
             } else {
                 predicates.add(cb.isNull(root.get("userGroup").as(String.class)));
             }
             query.where(cb.and(Iterables.toArray(predicates, Predicate.class)));
-            query.orderBy(cb.desc(root.get("cdate").as(Date.class)));
+            query.orderBy(cb.desc(root.get("userGroup").as(String.class)));
             return predicates.isEmpty() ? cb.conjunction() : cb.and(Iterables.toArray(predicates, Predicate.class));
         };
         List<LijiangTouristInfo> list = lijiangTouristDao.findAll(specification);
@@ -300,20 +338,26 @@ public class LijiangNewServiceImpl implements LijiangNewService {
                 return ApiReturn.failure("验证码数量不够，请添加验证码");
             }
             AtomicInteger validateIndex = new AtomicInteger();
-            LijiangAccountNumber accountNumber = accountNumberDao.findOne(touristInfoList.get(0).getId());
+            LijiangAccountNumber accountNumber = accountNumberDao.findOne(touristInfoList.get(0).getAccountNumberId());
             String token = accountNumber.getToken();
             Integer accountId = accountNumber.getId();
             touristInfoList.forEach(lijiangTouristInfo -> {
                 lijiangTouristInfo.setAccountNumberId(accountId);
-                lijiangTouristInfo.setDelFlag(1);
-                validateIndex.getAndIncrement();
-                lijiangComp.addContacts(token, new ContactsDto(
+                String result = lijiangComp.addContacts(token, new ContactsDto(
                         lijiangTouristInfo.getCertificateTypeId() + "",
                         lijiangTouristInfo.getPhoneNumber(),
                         lijiangTouristInfo.getFacePicPath(),
                         lijiangTouristInfo.getCertificateNo(),
                         lijiangTouristInfo.getCertificateName(),
                         validateInfos.get(validateIndex.get()).getValidate()));
+                if (StringUtils.isBlank(result)) {
+                    lijiangTouristInfo.setMessage("上传联系人本地程序异常");
+                } else if (StringUtils.equals("200", result)) {
+                    lijiangTouristInfo.setMessage("上传成功");
+                    lijiangTouristInfo.setDelFlag(1);
+                } else {
+                    lijiangTouristInfo.setMessage(result);
+                }
                 validateIndex.getAndIncrement();
                 accountNumber.setUseStatus(1);
             });
@@ -328,7 +372,7 @@ public class LijiangNewServiceImpl implements LijiangNewService {
 
     @Override
     public ApiReturn setParamet() {
-        List<LijiangTouristInfo> lijiangTouristInfos = lijiangTouristDao.findByDelFlagAndImgStatusAndParameter(1, 1, 0);
+        List<LijiangTouristInfo> lijiangTouristInfos = lijiangTouristDao.findByDelFlagAndImgStatusAndParameterAndNewFlagAndUserGroupNotNull(1, 1, 0, 1);
         Map<Integer, List<LijiangTouristInfo>> map = lijiangTouristInfos.stream().collect(Collectors.groupingBy(LijiangTouristInfo::getAccountNumberId));
         map.forEach((key, value) -> {
             LijiangAccountNumber accountNumber = accountNumberDao.findOne(key);
@@ -336,6 +380,7 @@ public class LijiangNewServiceImpl implements LijiangNewService {
             value.forEach(lijiangTouristInfo -> {
                 Parameter.OrderItemsList.OrderCertificateItemsList orderCertificateItemsList = new Parameter.OrderItemsList.OrderCertificateItemsList();
                 BeanUtils.copyProperties(lijiangTouristInfo, orderCertificateItemsList);
+                lijiangTouristInfo.setParameter(1);
                 orderCertificateItemsLists.add(orderCertificateItemsList);
             });
             Parameter parameter = new Parameter();
@@ -422,7 +467,7 @@ public class LijiangNewServiceImpl implements LijiangNewService {
                 lijiangComp.saveOrder(lijiangParameterInfo.getToken(), lijiangParameterInfo.getParameters(), lijiangParameterInfo.getId());
             });
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -511,10 +556,9 @@ public class LijiangNewServiceImpl implements LijiangNewService {
 
     @Override
     @Transactional
-    public ApiReturn userGroup(List<Integer> ids) {
-        lijiangTouristDao.updateUserGroup(IdGen.randomString(5), ids);
+    public ApiReturn userGroup(List<Integer> ids, String phone) {
+        lijiangTouristDao.updateUserGroup(IdGen.randomString(5), ids, phone);
         return ApiReturn.success("分组成功");
-
     }
 
     @Override
@@ -530,15 +574,42 @@ public class LijiangNewServiceImpl implements LijiangNewService {
     }
 
     @Override
+    public ApiResult<List<ParameterDto>> getParameter(Integer delFlag) {
+        ApiResult<List<ParameterDto>> apiResult = new ApiResult<>();
+        List<LijiangParameterInfo> list = lijiangParameterInfoDao.findByDelFlag(delFlag);
+        List<ParameterDto> resultList = Lists.newArrayList();
+        list.forEach(lijiangParameterInfo -> {
+            Parameter parameter = JSONObject.parseObject(lijiangParameterInfo.getParameters(), Parameter.class);
+            List<Parameter.OrderItemsList> lists = parameter.getOrderItemsList();
+            List<Parameter.OrderItemsList.OrderCertificateItemsList> lists1 = lists.get(0).getOrderCertificateItemsList();
+            List<String> nameList = lists1.stream().map(Parameter.OrderItemsList.OrderCertificateItemsList::getCertificateName).collect(Collectors.toList());
+            String cardName = lists1.get(0).getCertificateCardName();
+            resultList.add(new ParameterDto(lijiangParameterInfo.getDelFlag() == 0 ? "失败" : "成功",
+                    lijiangParameterInfo.getMessage(),
+                    nameList.toString(),
+                    lijiangParameterInfo.getPhone(),
+                    lijiangParameterInfo.getUsername(),
+                    lijiangParameterInfo.getCountNumber(),
+                    cardName, lijiangParameterInfo.getId()
+            ));
+        });
+        apiResult.setData(resultList);
+        apiResult.setMessage("获取成功");
+        apiResult.setCode(CommonConstants.ReturnCode.SUCCESS);
+        return apiResult;
+    }
+
+    @Override
     @Transactional
     public ApiReturn loginAccount() {
-        lijiangTokenInfoDao.deleteAll();
-        List<LijiangParameterInfo> list = lijiangParameterInfoDao.findToken();
-        List<LijiangValidateInfo> listValidate = lijiangValidateInfoDao.findSize(LocalDateTime.now().toString(), 6);
+        List<LijiangAccountNumber> list = accountNumberDao.findByDelFlagAndImgFlagAndLoginStatusAndUseStatus(1, 1, 1, 1);
+        List<LijiangValidateInfo> listValidate = lijiangValidateInfoDao.findSize(LocalDateTime.now().toString(), list.size());
         for (int i = 0; i < list.size(); i++) {
-            lijiangComp.login(new AccountNumberDto(list.get(i).getUsername(),
+            String token = lijiangComp.login(new AccountNumberDto(list.get(i).getPhone(),
                     list.get(i).getPassword(), listValidate.get(i).getValidate()));
+            list.get(i).setToken(token);
         }
+        accountNumberDao.save(list);
         return ApiReturn.success("登录成功");
     }
 

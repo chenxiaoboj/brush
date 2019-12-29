@@ -2,11 +2,9 @@ package com.lanjchenx.module.lijiangnew.service;
 
 import com.lanjchenx.dto.ApiResult;
 import com.lanjchenx.dto.ApiReturn;
-import com.lanjchenx.module.lijiangnew.dto.LijiangTouristDto;
-import com.lanjchenx.module.lijiangnew.dto.PeopleDto;
-import com.lanjchenx.module.lijiangnew.dto.StatusDto;
-import com.lanjchenx.module.lijiangnew.dto.TouristRequestDto;
+import com.lanjchenx.module.lijiangnew.dto.*;
 import com.lanjchenx.module.lijiangnew.entity.LijiangAccountNumber;
+import com.lanjchenx.module.lijiangnew.entity.LijiangParameterInfo;
 import com.lanjchenx.module.lijiangnew.entity.LijiangTouristInfo;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,6 +24,13 @@ public interface LijiangNewService {
      * @return
      */
     ApiReturn upLoadImages(MultipartFile multipartFile,String validate);
+    /**
+     * 上传游客信息
+     *
+     * @param multipartFile
+     * @return
+     */
+    ApiReturn upLoadImages2(MultipartFile multipartFile,String userGroup,Integer id);
     /**
      * 上传游客信息
      *
@@ -140,7 +145,7 @@ public interface LijiangNewService {
      *
      * @return
      */
-    ApiReturn userGroup( List<Integer> ids);
+    ApiReturn userGroup( List<Integer> ids,String phone);
     /**
      * 批量删除游客
      *
@@ -154,6 +159,12 @@ public interface LijiangNewService {
      * @return
      */
     ApiResult<List<String>> getUserGroup();
+    /**
+     * 获取游客分组标识
+     *
+     * @return
+     */
+    ApiResult<List<ParameterDto>> getParameter(Integer delFlag);
 
     /**
      * 登录一批token传照片
