@@ -285,8 +285,10 @@ public class LijiangComp {
 //            this.findCreateOrder(token,parameter,id,15);
             String message = jsonObject.getString("message");
             if (StringUtils.equalsIgnoreCase("200", jsonObject.getString("code"))) {
-                lijiangParameterInfoDao.updateStatus(id,message);
+                lijiangParameterInfoDao.updateStatus(1,id,message);
                 logger.info("-------------提交订单成功----------修改状态");
+            }else {
+                lijiangParameterInfoDao.updateStatus(0,id,message);
             }
             http1.close();
             httpclient.close();
