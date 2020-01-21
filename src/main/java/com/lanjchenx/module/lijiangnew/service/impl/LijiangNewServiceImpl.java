@@ -461,17 +461,25 @@ public class LijiangNewServiceImpl implements LijiangNewService {
         if (parameterInfos == null) {
             return ApiReturn.failure("今天票为0");
         }
-        List<List<LijiangParameterInfo>> lists = Lists.partition(parameterInfos, 10);
-        for (List<LijiangParameterInfo> list : lists) {
-            list.forEach(lijiangParameterInfo -> {
-                lijiangComp.saveOrder(lijiangParameterInfo.getToken(), lijiangParameterInfo.getParameters(), lijiangParameterInfo.getId());
-            });
+        parameterInfos.forEach(lijiangParameterInfo -> {
+            lijiangComp.saveOrder(lijiangParameterInfo.getToken(), lijiangParameterInfo.getParameters(), lijiangParameterInfo.getId());
             try {
-                Thread.sleep(10);
+                Thread.sleep(5);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }
+        });
+//        List<List<LijiangParameterInfo>> lists = Lists.partition(parameterInfos, 10);
+//        for (List<LijiangParameterInfo> list : lists) {
+//            list.forEach(lijiangParameterInfo -> {
+//                lijiangComp.saveOrder(lijiangParameterInfo.getToken(), lijiangParameterInfo.getParameters(), lijiangParameterInfo.getId());
+//            });
+//            try {
+//                Thread.sleep(10);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }
         return ApiReturn.success("执行完成");
     }
 
