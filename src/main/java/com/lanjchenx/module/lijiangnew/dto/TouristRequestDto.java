@@ -12,7 +12,7 @@ import javax.validation.constraints.NotNull;
 @ApiModel(value = "上传游客信息请求参数")
 public class TouristRequestDto {
 
-    @ApiModelProperty(value = "id")
+    @ApiModelProperty(value = "id",example="1")
     private Integer id;
     @ApiModelProperty(value = "姓名")
     @NotBlank(message = "姓名不能为空")
@@ -23,12 +23,12 @@ public class TouristRequestDto {
     @ApiModelProperty(value = "图片地址")
     @NotBlank(message = "图片地址不能为空")
     private String imageUrl;
-    @ApiModelProperty(value = "用户id")
+    @ApiModelProperty(value = "用户id",example="1")
     @NotNull(message = "用户id不能为空")
     private Integer userId;
     @ApiModelProperty(value = "用户分组标识")
     private String userGroup;
-    @ApiModelProperty(value = "证件类型 0:身份证 1：护照")
+    @ApiModelProperty(value = "证件类型 0:身份证 1：护照",example="1")
     private Integer type;
 
     public Integer getType() {

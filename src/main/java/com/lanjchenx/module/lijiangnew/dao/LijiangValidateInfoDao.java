@@ -14,4 +14,7 @@ public interface LijiangValidateInfoDao extends CustomRepository<LijiangValidate
     @Query(value = "select * from lijiang_validate_info where value_date>?1 order by value_date DESC limit 0,?2 ", nativeQuery = true)
     List<LijiangValidateInfo> findSize(String time,Integer size);
 
+    @Query(value = "select validate from lijiang_validate_info where del_flag=0 order by value_date DESC limit 0,1 ", nativeQuery = true)
+    String getOneValidate();
+
 }

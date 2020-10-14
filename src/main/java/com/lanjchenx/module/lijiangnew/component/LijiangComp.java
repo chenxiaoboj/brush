@@ -4,16 +4,18 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.lanjchenx.module.lijiangnew.dao.LijiangValidateInfoDao;
+import com.lanjchenx.module.lijiangnew.dto.*;
+import com.lanjchenx.module.utils.RetryUtil;
 import com.lanjchenx.utils.ArithUtil;
 import com.lanjchenx.utils.MD5Utils;
 import com.lanjchenx.module.lijiangnew.dao.LijiangParameterInfoDao;
-import com.lanjchenx.module.lijiangnew.dto.AccountNumberDto;
-import com.lanjchenx.module.lijiangnew.dto.ContactsDto;
-import com.lanjchenx.module.lijiangnew.dto.TimeDto;
 import com.lanjchenx.module.lijiangnew.entity.LijiangParameterInfo;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -37,12 +39,10 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * @author admin 2019-04-25 22:51
@@ -55,6 +55,8 @@ public class LijiangComp {
 
     @Resource
     private LijiangParameterInfoDao lijiangParameterInfoDao;
+    @Resource
+    private LijiangValidateInfoDao lijiangValidateInfoDao;
 
 
     //登录地址
@@ -73,6 +75,8 @@ public class LijiangComp {
     private static final String ADD_CONTACTS = "https://mallwx.ltg.cn/individualFrequentContactsInterface/front/privateAuthority/addIndividualFrequentContacts";
     //获取时间段
     private static final String GET_TIME = "https://mallwx.ltg.cn/timeAndPerformanceAction/findScenicSpotsTime";
+    //获取支付宝订单链接
+    private static final String ALI_PAY_QR_CODE = "https://mallwx.ltg.cn/productReservationAction/front/privateAuthority/payOrder";
     //下单排队重查地址
     private static final String FIND_CREATE_ORDER = "https://mallwx.ltg.cn/individualFrequentContactsInterface/front/privateAuthority/addIndividualFrequentContacts";
 
@@ -88,24 +92,43 @@ public class LijiangComp {
         headers.add(new BasicHeader("X-Requested-With", "XMLHttpRequest"));
     }
 
-//    public static void main(String[] args) throws HttpException, IOException {
-//        Map<String, Integer> time =  new LijiangComp().getTimes();
-//        System.out.println(time);
-////        Map<String, String> map = Maps.newHashMap();
-////        map.put("13067518343", "100106");
-////        map.forEach((key, value) -> {
-////            String token = new LijiangComp().login(new AccountNumberDto(key, value));
-////            List<String> ids = new LijiangComp().getContacts(token);
-////            ids.forEach(s -> {
-////                try {
-////                    Thread.sleep(1000);
-////                    new LijiangComp().deleteContacts(token, s);
-////                } catch (InterruptedException e) {
-////                    e.printStackTrace();
-////                }
-////            });
-////        });
-//    }
+    public static void main(String[] args) throws HttpException, IOException {
+//        Long begin = System.currentTimeMillis();
+        Map<String, Integer> time = new LijiangComp().getTimes(LocalDate.now().plusDays(3).toString());
+        System.out.println(time);
+//        List<Map.Entry<String, Integer>> list = new ArrayList(time.entrySet());
+//        Collections.sort(list, (o2, o1) -> (o1.getValue() - o2.getValue()));
+//        Long end = System.currentTimeMillis();
+//        System.out.println(end - begin);
+//        System.out.println(list.get(0));
+//        Map<String, String> map = Maps.newHashMap();
+//        map.put("13067518343", "100106");
+//        map.forEach((key, value) -> {
+//            String token = new LijiangComp().login(new AccountNumberDto(key, value));
+//            List<String> ids = new LijiangComp().getContacts(token);
+//            ids.forEach(s -> {
+//                try {
+//                    Thread.sleep(1000);
+//                    new LijiangComp().deleteContacts(token, s);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            });
+//        });
+        String token = " eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIzYmM3MDY2Mi1iMzUzLTQ5MTEtYjhlOC0wODNjOGQyYmU0MjkiLCJpYXQiOjE1ODUzMDQwMTksImlzcyI6ImRlbW8iLCJzdWIiOiJ7XCJjZWxscGhvbmVcIjpcIjEzNjM0NTkzNDAyXCIsXCJlbWFpbFwiOlwiXCIsXCJmbGFnXCI6XCJZXCIsXCJuaWNrTmFtZVwiOlwiXCIsXCJwYXNzd29yZFwiOlwib1o3K0VCTUZxWlZTRjYybXpIa3Z4QT09XCIsXCJ1c2VySWRcIjoxMDAwMDAwMDI5ODI0NCxcInVzZXJOYW1lXCI6XCIxMzYzNDU5MzQwMlwiLFwidXNlclBob3RvVVJMXCI6XCJodHRwczovL21hbGxpbnRlci5sdGcuY246Mjg4NjYvXCIsXCJ1c2VyVHlwZVwiOlwiMVwifSJ9.UhiBDUQBC-KGJKH56CAA3uw7O74_O7nND367WoDaNpc";
+        new LijiangComp().getQRCode(token, "77527050614034",1);
+    }
+
+    public static String getMaxTime() {
+        Long begin = System.currentTimeMillis();
+        Map<String, Integer> time = new LijiangComp().getTimes(LocalDate.now().plusDays(1).toString());
+        List<Map.Entry<String, Integer>> list = new ArrayList(time.entrySet());
+        list.sort((o2, o1) -> (o1.getValue() - o2.getValue()));
+        Long end = System.currentTimeMillis();
+        logger.info("获取时间段耗时:{}", end - begin);
+        logger.info("当前最大票量为:{}", list.get(0).getValue());
+        return list.get(0).getKey();
+    }
 
     /**
      * 上传照片（需要token）
@@ -246,6 +269,53 @@ public class LijiangComp {
     }
 
     /**
+     * 获取常用联系人信息（需要token）
+     *
+     * @param token
+     * @return
+     * @throws IOException
+     */
+    @Async
+    @Transactional
+    public void getQRCode(String token, String orderBatchNO, Integer id) {
+        try {
+            Map<String, String> orderMap = Maps.newHashMap();
+            orderMap.put("paymentTypeId", "3");
+            orderMap.put("orderBatchNO", orderBatchNO);
+            List<String> contactsList = Lists.newArrayList();
+            CloseableHttpClient httpclient = HttpClients
+                    .custom()
+                    .setDefaultCookieStore(new BasicCookieStore())
+                    .setConnectionTimeToLive(1000 * 5, TimeUnit.MILLISECONDS)
+                    .setDefaultHeaders(headers)
+                    .build();
+            logger.info("------------------获取订单链接------------");
+            CloseableHttpResponse http1 = httpclient.execute(RequestBuilder.post()
+                    .setUri(ALI_PAY_QR_CODE)
+                    .setEntity(new StringEntity(JSONObject.toJSONString(orderMap)))
+                    .setHeader("token", token)
+                    .build());
+            String result = EntityUtils.toString(http1.getEntity());
+            logger.info("获取订单链接返回信息:{}", result);
+            JSONObject jsonObject = JSONObject.parseObject(result);
+            if (StringUtils.equalsIgnoreCase("200", jsonObject.getString("code")) &&
+                    StringUtils.equalsIgnoreCase("app支付创建成功", jsonObject.getString("message"))) {
+                JSONObject jsonObject1 = jsonObject.getJSONObject("data");
+                String redirectUrl = jsonObject1.getJSONObject("redirectUrl").getString("qrCode");
+                logger.info("该订单返回链接为:{}", redirectUrl);
+                lijiangParameterInfoDao.updateUrl(redirectUrl, id);
+            } else {
+                logger.info("--------------------获取订单链接信息错误-------------------");
+            }
+            http1.close();
+            httpclient.close();
+        } catch (Exception e) {
+            logger.info("--------------------获取订单链接信息异常-------------------");
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * 提交订单 + 提交支付信息接口（需要token）
      *
      * @param token
@@ -285,10 +355,11 @@ public class LijiangComp {
 //            this.findCreateOrder(token,parameter,id,15);
             String message = jsonObject.getString("message");
             if (StringUtils.equalsIgnoreCase("200", jsonObject.getString("code"))) {
-                lijiangParameterInfoDao.updateStatus(1,id,message);
-                logger.info("-------------提交订单成功----------修改状态");
-            }else {
-                lijiangParameterInfoDao.updateStatus(0,id,message);
+                String orderBatchNO = jsonObject.getJSONObject("data").getString("orderBatchNO");
+                lijiangParameterInfoDao.updateStatus(1, id, message, orderBatchNO);
+                logger.info("-------------提交订单成功----------修改状态，保存订单号");
+            } else {
+                lijiangParameterInfoDao.updateStatus(0, id, message,"");
             }
             http1.close();
             httpclient.close();
@@ -296,6 +367,87 @@ public class LijiangComp {
             e.printStackTrace();
             logger.info(e.getMessage());
             logger.info("提交订单异常");
+        }
+    }
+
+    /**
+     * 提交订单 + 提交支付信息接口（需要token）
+     *
+     * @param token
+     * @param parameter
+     * @return
+     */
+    @Async
+    @Transactional
+    public void saveOrder2(String token, String parameter, Integer id) {
+//        logger.info("ip:{}",brushTicketInfo.getHostName()+":"+brushTicketInfo.getPort());
+        try {
+//            HttpHost proxy = new HttpHost(brushTicketInfo.getHostName(), brushTicketInfo.getPort(), "http");
+            CloseableHttpClient httpclient = HttpClients
+                    .custom()
+                    .setDefaultCookieStore(new BasicCookieStore())
+//                    .setProxy(proxy)
+                    .setConnectionTimeToLive(1000 * 5, TimeUnit.MILLISECONDS)
+                    .setDefaultHeaders(headers)
+                    .build();
+            logger.info("------------------创建订单----------------");
+            HttpPost post = new HttpPost(SAVE_ORDER);
+            post.setHeader("token", token);
+            post.setHeader("iosUUID", UUID.randomUUID().toString().toUpperCase());
+            StringEntity s = new StringEntity(parameter, "UTF-8");
+            s.setContentEncoding("UTF-8");
+            s.setContentType("application/json");//发送json数据需要设置contentType
+            post.setEntity(s);
+            CloseableHttpResponse http1 = httpclient.execute(RequestBuilder.post()
+                    .setUri(SAVE_ORDER)
+                    .setHeader("token", token)
+                    .setEntity(s)
+                    .build());
+            String result = EntityUtils.toString(http1.getEntity());
+            logger.info("创建订单返回数据:{}", result);
+            JSONObject jsonObject = JSONObject.parseObject(result);
+            String code = jsonObject.getString("code");
+            if (StringUtils.equalsIgnoreCase("200", code)) {
+                String message = jsonObject.getString("message");
+                // 获取订单号
+                String orderBatchNO = jsonObject.getJSONObject("data").getString("orderBatchNO");
+                lijiangParameterInfoDao.updateStatus(1, id, message, orderBatchNO);
+                logger.info("-------------提交订单成功----------修改状态");
+            } else {
+                //获取最新验证码
+                RetryUtil retryUtil = new RetryUtil();
+                RetryUtil.setRetryTimes(10);
+                Parameter2 parameter2 = JSONObject.parseObject(parameter, Parameter2.class);
+                //TODO  如果订单中有人已经定过，去除该人
+                if (StringUtils.equalsIgnoreCase("50025", code)) {
+                    logger.info("-------------提交订单失败，进入重试，删除已定票联系人----------");
+                    Parameter2.OrderItemsList orderItemsList = parameter2.getOrderItemsList().get(0);
+                    orderItemsList.setSaleSum((Integer.parseInt(orderItemsList.getSaleSum()) - 1) + "");
+                    List<Parameter2.OrderItemsList.OrderCertificateItemsList> listAll = orderItemsList.getOrderCertificateItemsList();
+                    List<Parameter2.OrderItemsList.OrderCertificateItemsList> list = listAll.stream()
+                            .filter(user -> StringUtils.equals("", user.getCertificateNo())).collect(Collectors.toList());
+                    Parameter2.OrderItemsList.OrderCertificateItemsList orderCertificateItemsList = list.get(0);
+                    listAll.remove(orderCertificateItemsList);
+                    if (StringUtils.equals(parameter2.getOrderTackTicketName(), orderCertificateItemsList.getCertificateName())) {
+                        parameter2.setOrderTackTicketName(listAll.get(0).getCertificateName());
+                        parameter2.setOrderTackTicketPhone(listAll.get(0).getPhoneNumber());
+                    }
+                    orderItemsList.setOrderCertificateItemsList(listAll);
+                } else if (StringUtils.equalsIgnoreCase("666666", code)) {
+                    logger.info("-------------提交订单失败，票量不足，获取最新票量信息----------");
+                    //TODO 获取最新最高 时间段漂亮
+                    parameter2.getOrderTimeControlList().get(0).setTimeControlDetailId(getMaxTime());
+                }
+                String validate = lijiangValidateInfoDao.getOneValidate();
+                parameter2.setValidate(validate);
+                retryUtil.retry(token, JSONObject.toJSONString(parameter2), id);
+            }
+            http1.close();
+            httpclient.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.info(e.getMessage());
+            logger.info("--------------提交订单异常，重新提交------------------");
         }
     }
 
@@ -379,7 +531,7 @@ public class LijiangComp {
      *
      * @throws IOException
      */
-    public Map<String, Integer> getTimes() {
+    public Map<String, Integer> getTimes(String time) {
         try {
             Map<String, Integer> timeMap = Maps.newHashMap();
             CloseableHttpClient httpclient = HttpClients
@@ -391,9 +543,9 @@ public class LijiangComp {
             logger.info("------------------获取时间段------------");
             HttpEntity httpEntity = new StringEntity(JSONObject.toJSONString(
                     new TimeDto("1", "XSSKKC",
-                            LocalDate.now() + "",
+                            time,
 //                            LocalDate.now().minusDays(1) + "",
-                            "10000000000002", "APPGP")));
+                            "10000000000002", "XCXGP")));
             CloseableHttpResponse http1 = httpclient.execute(RequestBuilder.post()
                     .setUri(GET_TIME)
                     .setEntity(httpEntity)
@@ -408,7 +560,7 @@ public class LijiangComp {
                     JSONObject timeDateJson = (JSONObject) timeDate;
                     String timeControlDetailId = timeDateJson.getString("timeControlDetailId");
                     Integer surplus = timeDateJson.getInteger("totalSum") - timeDateJson.getInteger("saleSum");
-                    if (surplus >= 12) {
+                    if (surplus >= 5) {
                         timeMap.put(timeControlDetailId, surplus);
                     }
                 });

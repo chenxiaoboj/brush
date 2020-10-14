@@ -14,17 +14,17 @@ import java.net.URL;
  */
 public class ImagesUtil {
 
-    public static void main(String[] args) {
-        String imageBase64 = "";
-        String path = "xxxxxxx";//图片url
-        try {
-            imageBase64 = getImageByPath(path);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        System.out.println(imageBase64);
-        //TODO 做自己的业务
-    }
+//    public static void main(String[] args) {
+//        String imageBase64 = "";
+//        String path = "xxxxxxx";//图片url
+//        try {
+//            imageBase64 = getImageByPath(path);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        System.out.println(imageBase64);
+//        //TODO 做自己的业务
+//    }
 
     public static String getImageByPath(String path) throws IOException {
         URL url = null;

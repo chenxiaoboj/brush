@@ -4,8 +4,11 @@ import com.lanjchenx.dto.ApiResult;
 import com.lanjchenx.dto.ApiReturn;
 import com.lanjchenx.module.lijiangnew.dto.ParameterDto;
 import com.lanjchenx.module.lijiangnew.dto.PeopleDto;
+import com.lanjchenx.module.lijiangnew.entity.LijiangTime;
 import com.lanjchenx.module.lijiangnew.entity.LijiangTouristInfo;
 import com.lanjchenx.module.lijiangnew.service.LijiangNewService;
+import com.lanjchenx.module.lijiangnew.service.LijiangNewService2;
+import com.lanjchenx.module.lijiangnew.service.LijiangTimeService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -26,11 +30,27 @@ public class LijangNewController {
 
     @Resource
     private LijiangNewService lijiangNewService;
+    @Resource
+    private LijiangNewService2 lijiangNewService2;
+    @Resource
+    private LijiangTimeService lijiangTimeService;
 
-    @ApiOperation(value = "按名字查用户")
-    @GetMapping(value = "/getTouristByName")
-    public ApiResult<List<LijiangTouristInfo>> getTouristByName(@RequestParam(required = true) String name) {
-        return lijiangNewService.getTouristByName(name);
+    @ApiOperation(value = "设置抢票时间")
+    @GetMapping(value = "/setTime")
+    public ApiReturn setTime(@RequestParam String time) {
+        return lijiangTimeService.setTime(time);
+    }
+
+    @ApiOperation(value = "获取抢票时间")
+    @GetMapping(value = "/getTime")
+    public ApiResult<LijiangTime>  getTime() {
+        return lijiangTimeService.getTime();
+    }
+
+    @ApiOperation(value = "处理订单链接")
+    @GetMapping(value = "/getOrderUrl")
+    public ApiReturn getOrderUrl() {
+        return lijiangNewService2.getOrderUrl();
     }
 
     @ApiOperation(value = "1：上传联系人,传分组code")
@@ -39,10 +59,10 @@ public class LijangNewController {
         return lijiangNewService.groupAndAddContacts(userGroup);
     }
 
-    @ApiOperation(value = "2：生成参数")
+    @ApiOperation(value = "2：生成参数  APP：1，小程序：2")
     @GetMapping(value = "/setParamet")
-    public ApiReturn setParamet() {
-        return lijiangNewService.setParamet();
+    public ApiReturn setParamet(@RequestParam Integer type) {
+        return lijiangNewService.setParamet(type);
     }
 
     @ApiOperation(value = "（第一步）刷新token  1：登录，2：删除联系人")
@@ -101,7 +121,7 @@ public class LijangNewController {
 
     @ApiOperation(value = "获取参数列表")
     @GetMapping(value = "/getParameter")
-    public  ApiResult<List<ParameterDto>> getParameter(@RequestParam Integer delFlag) {
+    public ApiResult<List<ParameterDto>> getParameter(@RequestParam Integer delFlag) {
         return lijiangNewService.getParameter(delFlag);
     }
 

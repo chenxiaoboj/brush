@@ -54,6 +54,30 @@ public class LijiangParameterInfo {
      * 返回信息
      */
     private String message;
+    /**
+     * 订单号
+     */
+    private String orderBatchNo;
+    /**
+     * 订单链接
+     */
+    private String orderUrl;
+
+    public String getOrderBatchNo() {
+        return orderBatchNo;
+    }
+
+    public void setOrderBatchNo(String orderBatchNo) {
+        this.orderBatchNo = orderBatchNo;
+    }
+
+    public String getOrderUrl() {
+        return orderUrl;
+    }
+
+    public void setOrderUrl(String orderUrl) {
+        this.orderUrl = orderUrl;
+    }
 
     public String getMessage() {
         return message;

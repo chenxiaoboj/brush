@@ -25,11 +25,16 @@ public class ParameterDto {
     private Integer countNumber;
     @ApiModelProperty(value = "id",example="1")
     private Integer id;
+    @ApiModelProperty(value = "订单号")
+    private String orderBatchNo;
+    @ApiModelProperty(value = "订单二维码链接")
+    private String orderUrl;
 
     public ParameterDto() {
     }
 
-    public ParameterDto(String status, String message, String names, String phone, String userName, Integer countNumber, String cardName,Integer id) {
+    public ParameterDto(String status, String message, String names, String phone,
+                        String userName, Integer countNumber, String cardName,Integer id, String orderBatchNo, String orderUrl) {
         this.status = status;
         this.message = message;
         this.names = names;
@@ -38,6 +43,24 @@ public class ParameterDto {
         this.cardName = cardName;
         this.countNumber = countNumber;
         this.id = id;
+        this.orderBatchNo = orderBatchNo;
+        this.orderUrl = orderUrl;
+    }
+
+    public String getOrderBatchNo() {
+        return orderBatchNo;
+    }
+
+    public void setOrderBatchNo(String orderBatchNo) {
+        this.orderBatchNo = orderBatchNo;
+    }
+
+    public String getOrderUrl() {
+        return orderUrl;
+    }
+
+    public void setOrderUrl(String orderUrl) {
+        this.orderUrl = orderUrl;
     }
 
     public Integer getId() {

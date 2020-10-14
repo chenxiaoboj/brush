@@ -13,8 +13,8 @@ import com.lanjchenx.module.lijiangnew.dao.*;
 import com.lanjchenx.module.lijiangnew.dto.*;
 import com.lanjchenx.module.lijiangnew.entity.*;
 import com.lanjchenx.module.lijiangnew.service.LijiangNewService;
+import com.lanjchenx.module.lijiangnew.service.LijiangNewService2;
 import com.lanjchenx.module.utils.RandomUtil;
-import com.lanjchenx.utils.DateStyle;
 import com.lanjchenx.utils.IdCardUtil;
 import com.lanjchenx.utils.IdGen;
 import org.apache.commons.lang3.RandomUtils;
@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -50,10 +49,9 @@ import java.util.stream.Collectors;
  * @author admin 2019-05-01 15:37
  */
 @Service
-public class LijiangNewServiceImpl implements LijiangNewService {
+public class LijiangNewServiceImpl2 implements LijiangNewService2 {
 
-
-    private static final Logger logger = LoggerFactory.getLogger(LijiangNewServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(LijiangNewServiceImpl2.class);
     @Autowired
     private LijiangTouristDao lijiangTouristDao;
     @Autowired
@@ -66,8 +64,15 @@ public class LijiangNewServiceImpl implements LijiangNewService {
     private LijiangValidateInfoDao lijiangValidateInfoDao;
     @Autowired
     private LijiangTokenInfoDao lijiangTokenInfoDao;
-    @Autowired
-    private LijiangTimeDao lijiangTimeDao;
+
+    @Override
+    public ApiReturn getOrderUrl() {
+        List<LijiangParameterInfo> list = lijiangParameterInfoDao.findByDelFlag(1);
+        list.forEach(lijiangParameterInfo -> {
+            lijiangComp.getQRCode(lijiangParameterInfo.getToken(), lijiangParameterInfo.getOrderBatchNo(), lijiangParameterInfo.getId());
+        });
+        return ApiReturn.success("处理结束");
+    }
 
     @Override
     public ApiReturn upLoadImages(MultipartFile multipartFile, String validate) {
@@ -376,43 +381,38 @@ public class LijiangNewServiceImpl implements LijiangNewService {
     }
 
     @Override
-    public ApiReturn setParamet(Integer type) {
-        LijiangTime lijiangTime = lijiangTimeDao.findFirstByDelFlag(0);
-        String date = lijiangTime.getTime();
+    public ApiReturn setParamet() {
         List<LijiangTouristInfo> lijiangTouristInfos = lijiangTouristDao.findByDelFlagAndImgStatusAndParameterAndNewFlagAndUserGroupNotNull(1, 1, 0, 1);
         Map<Integer, List<LijiangTouristInfo>> map = lijiangTouristInfos.stream().collect(Collectors.groupingBy(LijiangTouristInfo::getAccountNumberId));
         map.forEach((key, value) -> {
             LijiangAccountNumber accountNumber = accountNumberDao.findOne(key);
-            List<Parameter.OrderItemsList.OrderCertificateItemsList> orderCertificateItemsLists = Lists.newArrayList();
+            List<Parameter2.OrderItemsList.OrderCertificateItemsList> orderCertificateItemsLists = Lists.newArrayList();
             value.forEach(lijiangTouristInfo -> {
-                Parameter.OrderItemsList.OrderCertificateItemsList orderCertificateItemsList = new Parameter.OrderItemsList.OrderCertificateItemsList();
+                Parameter2.OrderItemsList.OrderCertificateItemsList orderCertificateItemsList = new Parameter2.OrderItemsList.OrderCertificateItemsList();
                 BeanUtils.copyProperties(lijiangTouristInfo, orderCertificateItemsList);
                 lijiangTouristInfo.setParameter(1);
                 orderCertificateItemsLists.add(orderCertificateItemsList);
             });
-            Parameter parameter = new Parameter();
-            //小程序订票
-            if (type==1){
-                parameter.setOrderNetType("APPGP");
-            }else {
-                parameter.setOrderNetType("XCXGP");
-            }
+            Parameter2 parameter = new Parameter2();
+            parameter.setOrderNetType("APPGP");
             parameter.setOrderTackTicketName(orderCertificateItemsLists.get(0).getCertificateName());
             parameter.setOrderTackTicketPhone(orderCertificateItemsLists.get(0).getPhoneNumber());
             parameter.setCertificateTypeNo("");
             parameter.setRemark("");
-            List<Parameter.OrderItemsList> orderItemsLists = Lists.newArrayList();
-            Parameter.OrderItemsList orderItemsList = new Parameter.OrderItemsList();
-            orderItemsList.setSaleSum(orderCertificateItemsLists.size());
+            List<Parameter2.OrderItemsList> orderItemsLists = Lists.newArrayList();
+            Parameter2.OrderItemsList orderItemsList = new Parameter2.OrderItemsList();
+            orderItemsList.setSaleSum(orderCertificateItemsLists.size() + "");
             //产品id
             orderItemsList.setProductOnlyNo("10000008258");
             orderItemsList.setOrderCertificateItemsList(orderCertificateItemsLists);
-//         todo   orderItemsList.setArriveDT("2020-05-05");
-            orderItemsList.setArriveDT(date);
+            orderItemsList.setArriveDT(LocalDate.now().toString());
             orderItemsList.setProductType("ZHTC");
             orderItemsLists.add(orderItemsList);
             parameter.setOrderItemsList(orderItemsLists);
             parameter.setOrderTimeControlList(null);
+            parameter.setArriveDT(LocalDate.now().toString());
+            parameter.setValidate(null);
+
             LijiangParameterInfo lijiangParameterInfo = new LijiangParameterInfo();
             lijiangParameterInfo.setParameters(JSONObject.toJSONString(parameter));
             lijiangParameterInfo.setToken(accountNumber.getToken());
@@ -455,9 +455,7 @@ public class LijiangNewServiceImpl implements LijiangNewService {
 
     @Override
     public ApiReturn brush() {
-        LijiangTime lijiangTime = lijiangTimeDao.findFirstByDelFlag(0);
-        String date = lijiangTime.getTime();
-        List<LijiangParameterInfo> parameterInfos = this.parameter(date);
+        List<LijiangParameterInfo> parameterInfos = this.parameter();
         if (parameterInfos == null) {
             return ApiReturn.failure("今天票为0");
         }
@@ -472,9 +470,7 @@ public class LijiangNewServiceImpl implements LijiangNewService {
 
     @Override
     public ApiReturn brushOrd() {
-        LijiangTime lijiangTime = lijiangTimeDao.findFirstByDelFlag(0);
-        String date = lijiangTime.getTime();
-        List<LijiangParameterInfo> parameterInfos = this.parameter(date);
+        List<LijiangParameterInfo> parameterInfos = this.parameter();
         if (parameterInfos == null) {
             return ApiReturn.failure("今天票为0");
         }
@@ -644,10 +640,10 @@ public class LijiangNewServiceImpl implements LijiangNewService {
      *
      * @return
      */
-    public List<LijiangParameterInfo> parameter(String date) {
+    public List<LijiangParameterInfo> parameter() {
         List<LijiangParameterInfo> parameterInfos = lijiangParameterInfoDao.findByDelFlag(0);
         List<LijiangValidateInfo> validateInfos = lijiangValidateInfoDao.findSize(LocalDateTime.now().toString(), parameterInfos.size());
-       int count2 = validateInfos.size();
+        int count2 = validateInfos.size();
         if (validateInfos.size() < parameterInfos.size()) {
             for (int i = 0; i < parameterInfos.size() - count2; i++) {
                 LijiangValidateInfo lijiang = new LijiangValidateInfo();
@@ -656,8 +652,7 @@ public class LijiangNewServiceImpl implements LijiangNewService {
             }
         }
         AtomicInteger validateIndex = new AtomicInteger(0);
-        Map<String, Integer> timeMap = lijiangComp.getTimes(date);
-//      todo  Map<String, Integer> timeMap = lijiangComp.getTimes("2020-05-05");
+        Map<String, Integer> timeMap = lijiangComp.getTimes(LocalDate.now() + "");
         AtomicReference<Integer> allCount = new AtomicReference<>(0);
         timeMap.forEach((key, value) -> {
             allCount.updateAndGet(v -> v + value);
@@ -684,24 +679,16 @@ public class LijiangNewServiceImpl implements LijiangNewService {
                     return;
                 }
                 LijiangParameterInfo lijiangParameterInfo = parameterInfos.get(i.get());
-                Parameter.OrderTimeControlList orderTimeControlList = new Parameter.OrderTimeControlList();
-                orderTimeControlList.setScenicSpotsId(10000000000002L);
-                orderTimeControlList.setTimeControlDetailId(Long.parseLong(key));
-                List<Parameter.OrderTimeControlList> list = Lists.newArrayList();
+                Parameter2 parameter2 = JSONObject.parseObject(lijiangParameterInfo.getParameters(), Parameter2.class);
+                parameter2.setValidate(validateInfos.get(validateIndex.get()).getValidate());
+                List<Parameter2.OrderTimeControlList> list = Lists.newArrayList();
+                Parameter2.OrderTimeControlList orderTimeControlList = new Parameter2.OrderTimeControlList();
+                orderTimeControlList.setScenicSpotsId(10000000000002L + "");
+                orderTimeControlList.setTimeControlDetailId(key);
                 list.add(orderTimeControlList);
-                StringBuilder stringBuilder = new StringBuilder(lijiangParameterInfo.getParameters());
-                stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-                lijiangParameterInfo.setParameters((stringBuilder.append(",\"orderTimeControlList\": ")
-                        .append(JSONObject.toJSONString(list)).append(",\"arriveDT\": \"")
-                        .append(date).append("\"")
-//                      todo  .append("2020-05-05").append("\"")
-                        .append(",\"createOrderUuid\": \"").append(System.currentTimeMillis()).append(RandomUtil.getRandomString(8)).append("\"")
-                        .append(",\"validate\": \"")
-                        .append(validateInfos.get(validateIndex.get()).getValidate())
-                        .append("\"")
-                        .append("}")).toString());
+                parameter2.setOrderTimeControlList(list);
+                lijiangParameterInfo.setParameters(JSONObject.toJSONString(parameter2));
                 newParameter.add(lijiangParameterInfo);
-                validateIndex.set(validateIndex.get() + 1);
                 count += lijiangParameterInfo.getCountNumber();
                 i.getAndIncrement();
             }

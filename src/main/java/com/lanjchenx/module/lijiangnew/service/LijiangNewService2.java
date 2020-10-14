@@ -4,7 +4,6 @@ import com.lanjchenx.dto.ApiResult;
 import com.lanjchenx.dto.ApiReturn;
 import com.lanjchenx.module.lijiangnew.dto.*;
 import com.lanjchenx.module.lijiangnew.entity.LijiangAccountNumber;
-import com.lanjchenx.module.lijiangnew.entity.LijiangParameterInfo;
 import com.lanjchenx.module.lijiangnew.entity.LijiangTouristInfo;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,24 +12,30 @@ import java.util.List;
 /**
  * @author admin 2019-05-01 15:37
  */
-public interface LijiangNewService {
+public interface LijiangNewService2 {
 
 
 
+    /**
+     * 处理订单信息
+     *
+     * @return
+     */
+    ApiReturn getOrderUrl();
     /**
      * 上传游客信息
      *
      * @param multipartFile
      * @return
      */
-    ApiReturn upLoadImages(MultipartFile multipartFile,String validate);
+    ApiReturn upLoadImages(MultipartFile multipartFile, String validate);
     /**
      * 上传游客信息
      *
      * @param multipartFile
      * @return
      */
-    ApiReturn upLoadImages2(MultipartFile multipartFile,String userGroup,Integer id);
+    ApiReturn upLoadImages2(MultipartFile multipartFile, String userGroup, Integer id);
     /**
      * 上传游客信息
      *
@@ -87,7 +92,7 @@ public interface LijiangNewService {
      *
      * @return
      */
-    ApiReturn setParamet(Integer type);
+    ApiReturn setParamet();
 
 
     /**
@@ -138,20 +143,20 @@ public interface LijiangNewService {
      *
      * @return
      */
-    ApiReturn saveValidate(String validate,Long expirationTime);
+    ApiReturn saveValidate(String validate, Long expirationTime);
 
     /**
      * 为游客分组
      *
      * @return
      */
-    ApiReturn userGroup( List<Integer> ids,String phone);
+    ApiReturn userGroup(List<Integer> ids, String phone);
     /**
      * 批量删除游客
      *
      * @return
      */
-    ApiReturn deleteUser( List<Integer> ids);
+    ApiReturn deleteUser(List<Integer> ids);
 
     /**
      * 获取游客分组标识

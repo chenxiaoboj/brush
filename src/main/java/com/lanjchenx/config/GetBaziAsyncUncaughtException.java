@@ -1,4 +1,4 @@
-package com.lanjchenx.module.async;
+package com.lanjchenx.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
