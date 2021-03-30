@@ -38,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -161,7 +162,7 @@ public class LijiangComp {
             HttpEntity responseEntity = response.getEntity();
             if (responseEntity != null) {
                 // 将响应内容转换为字符串
-                result = EntityUtils.toString(responseEntity, Charset.forName("UTF-8"));
+                result = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);
                 logger.info("上传图片接口返回数据:{}", result);
                 JSONObject jsonObject = JSONObject.parseObject(result);
                 if (StringUtils.equalsIgnoreCase("200", jsonObject.getString("code")) &&
@@ -172,8 +173,6 @@ public class LijiangComp {
                     imageUrl = jsonObject.getString("message");
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -435,7 +434,7 @@ public class LijiangComp {
                     orderItemsList.setOrderCertificateItemsList(listAll);
                 } else if (StringUtils.equalsIgnoreCase("666666", code)) {
                     logger.info("-------------提交订单失败，票量不足，获取最新票量信息----------");
-                    //TODO 获取最新最高 时间段漂亮
+                    //TODO 获取最新最高 时间段票量
                     parameter2.getOrderTimeControlList().get(0).setTimeControlDetailId(getMaxTime());
                 }
                 String validate = lijiangValidateInfoDao.getOneValidate();
@@ -446,7 +445,7 @@ public class LijiangComp {
             httpclient.close();
         } catch (Exception e) {
             e.printStackTrace();
-            logger.info(e.getMessage());
+            logger.error(e.getMessage());
             logger.info("--------------提交订单异常，重新提交------------------");
         }
     }
@@ -492,8 +491,7 @@ public class LijiangComp {
      */
     public String addContacts(String token, ContactsDto contactsDto) {
         try {
-            Thread.sleep(1000 * 2);
-            List<String> contactsList = Lists.newArrayList();
+//            Thread.sleep(1000 * 2);
             CloseableHttpClient httpclient = HttpClients
                     .custom()
                     .setDefaultCookieStore(new BasicCookieStore())
@@ -515,7 +513,7 @@ public class LijiangComp {
             httpclient.close();
             if (StringUtils.equalsIgnoreCase("200", jsonObject.getString("code")) &&
                     StringUtils.equalsIgnoreCase("保存常用联系人成功", jsonObject.getString("message"))) {
-                logger.info("-------------保存常用联系人成功----------", contactsList);
+                logger.info("-------------保存常用联系人成功----------:{}", contactsDto.getFrequentContactsName());
                 return "200";
             } else {
                 return jsonObject.getString("message");
